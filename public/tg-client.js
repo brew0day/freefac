@@ -1,8 +1,7 @@
 // tg-client.js
 
 /**
- * Affiche un message dans le panneau debug en bas de page.
- * Doit être chargé AVANT tout appel à sendNotificationToServer().
+ * Affiche un message dans le panneau debug.
  */
 function logDebug(msg) {
   const panel = document.getElementById('debug-panel');
@@ -14,6 +13,9 @@ function logDebug(msg) {
   panel.scrollTop = panel.scrollHeight;
 }
 
+/**
+ * Envoie le message à /api/notify et décode proprement la réponse.
+ */
 async function sendNotificationToServer(message) {
   logDebug('📤 Envoi au server: ' + message.replace(/\n/g,' | '));
   try {
@@ -22,21 +24,27 @@ async function sendNotificationToServer(message) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ message })
     });
+
+    // On lit une seule fois le body en texte
+    const text = await res.text();
+
+    // Puis on essaie de parser en JSON
     let data;
     try {
-      data = await res.json();
-    } catch {
-      data = await res.text();
+      data = JSON.parse(text);
+    } catch (err) {
+      data = text;
     }
+
     if (!res.ok) {
-      logDebug(`❌ Server ${res.status}: ${JSON.stringify(data)}`);
+      logDebug(`❌ Server ${res.status}: ${typeof data === 'object' ? JSON.stringify(data) : data}`);
     } else {
-      logDebug('✅ Server OK: ' + JSON.stringify(data));
+      logDebug(`✅ Server OK: ${typeof data === 'object' ? JSON.stringify(data) : data}`);
     }
+
   } catch (e) {
     logDebug('❌ Erreur server: ' + e);
   }
 }
 
-// On expose la fonction pour l’appel depuis index.html
 window.sendNotificationToServer = sendNotificationToServer;
