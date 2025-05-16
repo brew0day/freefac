@@ -19,3 +19,6 @@
   },
   "homepage": "https://github.com/brew0day/transfert#readme"
 }
+{
+  "type": "module"
+}
