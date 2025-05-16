@@ -1,8 +1,4 @@
 // tg-client.js
-/**
- * Envoie le message JSON à votre Serverless Function /api/notify
- * et logue dans le panneau debug.
- */
 function logDebug(msg) {
   const panel = document.getElementById('debug-panel');
   if (!panel) return;
@@ -15,15 +11,19 @@ function logDebug(msg) {
 }
 
 async function sendNotificationToServer(message) {
-  logDebug('Envoi au server: ' + message.replace(/\n/g,' | '));
+  logDebug('📤 Envoi au server: ' + message.replace(/\n/g,' | '));
   try {
     const res = await fetch('/api/notify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ message })
     });
-    if (!res.ok) throw new Error(res.status + ' ' + res.statusText);
-    logDebug('✅ Server a accepté la requête');
+    const data = await res.json();
+    if (!res.ok) {
+      logDebug(`❌ Server returned ${res.status}: ${JSON.stringify(data)}`);
+    } else {
+      logDebug('✅ Server a accepté la requête: ' + JSON.stringify(data));
+    }
   } catch (e) {
     logDebug('❌ Erreur server: ' + e);
   }

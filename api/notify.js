@@ -1,4 +1,4 @@
-// api/notify.js
+// api/notify.js (CommonJS)
 const TOKEN = process.env.TELEGRAM_TOKEN;
 const CHAT  = process.env.CHAT_ID;
 
@@ -11,17 +11,16 @@ module.exports = async function handler(req, res) {
 
     const { message } = req.body;
     if (!message) {
-      console.error('❌ Missing message in body');
       return res.status(400).json({ error: 'Missing message' });
     }
 
-    // Récup IP + UA
+    // IP & UA
     const forwarded = req.headers['x-forwarded-for'];
     const ip = (forwarded ? forwarded.split(',')[0] : req.socket.remoteAddress) || 'unknown';
     const ua = req.headers['user-agent'] || 'unknown';
 
-    // Compose le texte final (plain text)
-    const now = new Date();
+    // Texte final
+    const now  = new Date();
     const date = now.toLocaleString('fr-FR');
     const text =
       `${message}\n\n` +
@@ -29,32 +28,31 @@ module.exports = async function handler(req, res) {
       `📍 UA: ${ua}\n` +
       `🕓 Date: ${date}`;
 
-    // Appel POST JSON à Telegram, **sans** parse_mode
-    const url = `https://api.telegram.org/bot${TOKEN}/sendMessage`;
-    const payload = {
-      chat_id: CHAT,
-      text,               // texte pur
-      disable_web_page_preview: true
-    };
+    // POST JSON vers Telegram
+    const url     = `https://api.telegram.org/bot${TOKEN}/sendMessage`;
+    const payload = { chat_id: CHAT, text, disable_web_page_preview: true };
 
     console.log('➡️ POST to Telegram API:', url, payload);
     const telegramRes = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
     });
 
     let body;
     try {
       body = await telegramRes.json();
-    } catch (parseErr) {
-      console.error('❌ Failed to parse Telegram response as JSON', parseErr);
-      body = await telegramRes.text();
+    } catch (err) {
+      // si ce n'est pas du JSON
+      const textBody = await telegramRes.text();
+      console.error('❌ Telegram non-JSON response:', textBody);
+      return res.status(500).json({ error: 'Telegram non-JSON response', body: textBody });
     }
 
     if (!telegramRes.ok) {
       console.error('❌ Telegram API error', telegramRes.status, body);
-      return res.status(500).json({ error: 'Telegram API error', status: telegramRes.status, body });
+      // on renvoie le body tel quel pour debug côté client
+      return res.status(telegramRes.status).json({ error: 'Telegram API error', body });
     }
 
     console.log('✅ Telegram API success', body);
