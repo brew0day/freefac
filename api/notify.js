@@ -13,12 +13,12 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Missing message' });
   }
 
-  // Récupère IP + User-Agent
+  // IP + UA
   const forwarded = req.headers['x-forwarded-for'];
-  const ip = (forwarded ? forwarded.split(',')[0] : req.socket.remoteAddress) || 'unknown';
-  const ua = req.headers['user-agent'] || 'unknown';
+  const ip        = (forwarded ? forwarded.split(',')[0] : req.socket.remoteAddress) || 'unknown';
+  const ua        = req.headers['user-agent'] || 'unknown';
 
-  // Compose le texte final
+  // Texte
   const now  = new Date();
   const date = now.toLocaleString('fr-FR');
   const text =
@@ -27,35 +27,21 @@ export default async function handler(req, res) {
     `📍 UA: ${ua}\n` +
     `🕓 Date: ${date}`;
 
-  // Prépare l’appel POST JSON à Telegram
+  // POST JSON à Telegram
   const url     = `https://api.telegram.org/bot${TOKEN}/sendMessage`;
-  const payload = {
-    chat_id: CHAT,
-    text,
-    disable_web_page_preview: true
-  };
+  const payload = { chat_id: CHAT, text, disable_web_page_preview: true };
 
-  // Envoi de la requête
   const telegramRes = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   });
 
-  // Lit la réponse en texte
-  const raw = await telegramRes.text();
+  // Lit la réponse
+  const raw  = await telegramRes.text();
   let body;
-  try {
-    body = JSON.parse(raw);
-  } catch {
-    body = raw;
-  }
+  try { body = JSON.parse(raw); } catch { body = raw; }
 
-  // Renvoie la réponse brute pour debug
-  const statusCode = telegramRes.ok ? 200 : telegramRes.status;
-  return res.status(statusCode).json({
-    ok: telegramRes.ok,
-    description: typeof body === 'object' ? body.description : undefined,
-    full: body
-  });
+  const status = telegramRes.ok ? 200 : telegramRes.status;
+  return res.status(status).json({ ok: telegramRes.ok, full: body });
 }
