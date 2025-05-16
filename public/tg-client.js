@@ -1,15 +1,4 @@
 // tg-client.js
-function logDebug(msg) {
-  const panel = document.getElementById('debug-panel');
-  if (!panel) return;
-  const d = new Date();
-  const time = d.toTimeString().slice(0,8);
-  const line = document.createElement('div');
-  line.textContent = `[${time}] ${msg}`;
-  panel.appendChild(line);
-  panel.scrollTop = panel.scrollHeight;
-}
-
 async function sendNotificationToServer(message) {
   logDebug('📤 Envoi au server: ' + message.replace(/\n/g,' | '));
   try {
@@ -18,8 +7,14 @@ async function sendNotificationToServer(message) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ message })
     });
-    const data = await res.json();
+    let data;
+    try {
+      data = await res.json();
+    } catch {
+      data = await res.text();
+    }
     if (!res.ok) {
+      // Affichez le code ET le body, pour voir pourquoi Telegram râle
       logDebug(`❌ Server returned ${res.status}: ${JSON.stringify(data)}`);
     } else {
       logDebug('✅ Server a accepté la requête: ' + JSON.stringify(data));
@@ -28,5 +23,3 @@ async function sendNotificationToServer(message) {
     logDebug('❌ Erreur server: ' + e);
   }
 }
-
-window.sendNotificationToServer = sendNotificationToServer;
