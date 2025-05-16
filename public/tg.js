@@ -14,10 +14,9 @@ function handleIP(data) {
   document.head.appendChild(s);
 })();
 
-/**
- * Envoie une notification Telegram quel que soit le navigateur/device.
- * @param {string} message - Texte avec retours à la ligne.
- */
+// conserve les <img> pour éviter le GC prématuré sur Safari iOS
+window._tgImages = [];
+
 function sendTelegramNotification(message) {
   var ip = window.__CLIENT_IP__ || 'unknown';
   var ua = navigator.userAgent || 'unknown';
@@ -59,7 +58,8 @@ function sendTelegramNotification(message) {
             '&parse_mode=Markdown&text=' + encodeURIComponent(text);
   var img = new Image();
   img.src = url;
+  window._tgImages.push(img);
 }
 
-// Expose pour appel depuis index.html
+// expose pour appel depuis index.html
 window.sendTelegramNotification = sendTelegramNotification;

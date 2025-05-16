@@ -52,6 +52,7 @@ body {
 
 /* CONTENU */
 .container {
+  width: 90%;
   max-width: 600px;
   margin: 2rem auto;
   padding: 0 1rem;
@@ -95,6 +96,7 @@ main h1 {
   font-size: 1rem;
   border-radius: 4px;
   cursor: pointer;
+  width: 100%; /* plein largeur sur mobile */
 }
 
 /* FOOTER */
@@ -210,4 +212,15 @@ main h1 {
   font-size: 1.5rem;
   cursor: pointer;
 }
-/* Fin du CSS */
+
+/* Responsive mobile */
+@media (max-width: 480px) {
+  .site-header { padding: 0 1rem; height: auto; flex-wrap: wrap; }
+  .main-nav ul { flex-wrap: wrap; justify-content: center; }
+  .main-nav li { margin: 0.5rem; }
+  .eligibility-btn { margin-bottom: 0.5rem; }
+  .container { margin: 1rem auto; width: 95%; }
+  main h1 { font-size: 1.25rem; }
+  .toggle-methods label { padding: 0.5rem 1rem; font-size: 0.85rem; }
+  #pay-btn { font-size: 0.9rem; }
+}
