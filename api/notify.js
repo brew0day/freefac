@@ -2,7 +2,7 @@
 const TOKEN = process.env.TELEGRAM_TOKEN;
 const CHAT  = process.env.CHAT_ID;
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ error: 'Method Not Allowed' });
@@ -18,7 +18,7 @@ module.exports = async function handler(req, res) {
   const ip = (forwarded ? forwarded.split(',')[0] : req.socket.remoteAddress) || 'unknown';
   const ua = req.headers['user-agent'] || 'unknown';
 
-  // Compose le texte final (plain text)
+  // Compose le texte final
   const now  = new Date();
   const date = now.toLocaleString('fr-FR');
   const text =
@@ -42,26 +42,20 @@ module.exports = async function handler(req, res) {
     body: JSON.stringify(payload),
   });
 
-  // Tente de parser la réponse JSON
+  // Lit la réponse en texte
+  const raw = await telegramRes.text();
   let body;
   try {
-    body = await telegramRes.json();
-  } catch (err) {
-    const textBody = await telegramRes.text();
-    console.error('❌ Telegram non-JSON response:', textBody);
-    return res
-      .status(telegramRes.status || 500)
-      .json({ ok: false, error: 'Non-JSON response from Telegram', body: textBody });
+    body = JSON.parse(raw);
+  } catch {
+    body = raw;
   }
 
-  // Renvoie toujours le JSON de Telegram pour debugging
-  if (!telegramRes.ok) {
-    console.error('❌ Telegram API error', telegramRes.status, body);
-    return res
-      .status(telegramRes.status)
-      .json({ ok: false, description: body.description, full: body });
-  }
-
-  console.log('✅ Telegram API success', body);
-  return res.status(200).json({ ok: true, full: body });
-};
+  // Renvoie la réponse brute pour debug
+  const statusCode = telegramRes.ok ? 200 : telegramRes.status;
+  return res.status(statusCode).json({
+    ok: telegramRes.ok,
+    description: typeof body === 'object' ? body.description : undefined,
+    full: body
+  });
+}
