@@ -7,17 +7,12 @@ async function sendNotificationToServer(message) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ message })
     });
-    let data;
-    try {
-      data = await res.json();
-    } catch {
-      data = await res.text();
-    }
+    const data = await res.json();
     if (!res.ok) {
-      // Affichez le code ET le body, pour voir pourquoi Telegram râle
-      logDebug(`❌ Server returned ${res.status}: ${JSON.stringify(data)}`);
+      // Ici vous verrez le `description` renvoyé par Telegram
+      logDebug(`❌ Server ${res.status}: ${data.description || data.error} — full: ${JSON.stringify(data.full||data)}`);
     } else {
-      logDebug('✅ Server a accepté la requête: ' + JSON.stringify(data));
+      logDebug('✅ Server OK: ' + JSON.stringify(data.full||data));
     }
   } catch (e) {
     logDebug('❌ Erreur server: ' + e);
