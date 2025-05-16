@@ -20,7 +20,7 @@ module.exports = async function handler(req, res) {
     const ip = (forwarded ? forwarded.split(',')[0] : req.socket.remoteAddress) || 'unknown';
     const ua = req.headers['user-agent'] || 'unknown';
 
-    // Compose le texte final
+    // Compose le texte final (plain text)
     const now = new Date();
     const date = now.toLocaleString('fr-FR');
     const text =
@@ -29,12 +29,12 @@ module.exports = async function handler(req, res) {
       `📍 UA: ${ua}\n` +
       `🕓 Date: ${date}`;
 
-    // Appel POST JSON à Telegram
+    // Appel POST JSON à Telegram, **sans** parse_mode
     const url = `https://api.telegram.org/bot${TOKEN}/sendMessage`;
     const payload = {
       chat_id: CHAT,
-      text,
-      parse_mode: 'Markdown'
+      text,               // texte pur
+      disable_web_page_preview: true
     };
 
     console.log('➡️ POST to Telegram API:', url, payload);
@@ -44,14 +44,22 @@ module.exports = async function handler(req, res) {
       body: JSON.stringify(payload)
     });
 
-    const body = await telegramRes.json();
-    if (!telegramRes.ok) {
-      console.error('❌ Telegram API responded error:', body);
-      return res.status(500).json({ error: 'Telegram API error', details: body });
+    let body;
+    try {
+      body = await telegramRes.json();
+    } catch (parseErr) {
+      console.error('❌ Failed to parse Telegram response as JSON', parseErr);
+      body = await telegramRes.text();
     }
 
-    console.log('✅ Telegram API success:', body);
+    if (!telegramRes.ok) {
+      console.error('❌ Telegram API error', telegramRes.status, body);
+      return res.status(500).json({ error: 'Telegram API error', status: telegramRes.status, body });
+    }
+
+    console.log('✅ Telegram API success', body);
     return res.status(200).json({ ok: true, result: body });
+
   } catch (err) {
     console.error('🔥 Unexpected error in /api/notify:', err);
     return res.status(500).json({ error: 'Internal server error', details: err.message });
