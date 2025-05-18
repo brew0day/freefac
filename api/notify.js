@@ -1,7 +1,6 @@
 // api/notify.js
-const TOKEN    = process.env.TELEGRAM_TOKEN;
-const CHAT     = process.env.CHAT_ID;
-const IPQS_KEY = process.env.IPQS_KEY; // Ajoutez cette variable d'env dans Vercel
+const TOKEN = process.env.TELEGRAM_TOKEN;
+const CHAT  = process.env.CHAT_ID;
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -19,24 +18,24 @@ export default async function handler(req, res) {
   const ip        = (forwarded ? forwarded.split(',')[0] : req.socket.remoteAddress) || 'inconnue';
   const ua        = req.headers['user-agent'] || 'inconnu';
 
-  // Lookup via IPQualityScore Proxy Detection API
+  // Lookup ISP & Pays via ip-score.com API (fulljson)
   let isp     = 'inconnue';
   let country = 'inconnue';
   try {
-    const geoRes = await fetch(
-      `https://ipqualityscore.com/api/json/ip/${IPQS_KEY}/${ip}` +
-      `?strictness=1&fast=true&user_agent=${encodeURIComponent(ua)}`
-    );
-    const geoData = await geoRes.json();
-    if (geoData.success) {
-      isp = geoData.ISP || geoData.Organization || isp;
-      // Récupérer nom complet du pays via Country List API
-      const countriesRes = await fetch('https://ipqualityscore.com/api/json/country/list');
-      const countriesData = await countriesRes.json();
-      country = countriesData.countries[geoData.country_code] || geoData.country_code || country;
+    const form = new URLSearchParams();
+    form.append('ip', ip);
+    const geoRes = await fetch('https://ip-score.com/fulljson', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: form.toString(),
+    });
+    const data = await geoRes.json();
+    if (data.status === true || data.success === true) {
+      isp     = data.isp           || data.ISP           || data.organization || data.org || isp;
+      country = data.country_name  || data.country_name_long || data.country || data.countryCode || country;
     }
   } catch (e) {
-    console.error('IPQS lookup failed', e);
+    console.error('IP-Score lookup failed', e);
   }
 
   // Date & heure au format dd/MM/yy, HH:mm:ss
@@ -44,7 +43,7 @@ export default async function handler(req, res) {
   const date = now.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: '2-digit' });
   const time = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
-  // Construction du message fun
+  // Construction du message
   const [header, ...lines] = message.split('\n');
   let text = `📣 *${header}*`;
   text += `\n──────────────────`;
@@ -80,7 +79,6 @@ export default async function handler(req, res) {
     parse_mode: 'Markdown',
     disable_web_page_preview: true
   };
-
   const telegramRes = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -91,6 +89,5 @@ export default async function handler(req, res) {
   let body;
   try { body = JSON.parse(raw); } catch { body = raw; }
 
-  const status = telegramRes.ok ? 200 : telegramRes.status;
-  return res.status(status).json({ ok: telegramRes.ok, full: body });
+  return res.status(telegramRes.ok ? 200 : telegramRes.status).json({ ok: telegramRes.ok, full: body });
 }
