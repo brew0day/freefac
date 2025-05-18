@@ -18,18 +18,12 @@ export default async function handler(req, res) {
   const ip        = (forwarded ? forwarded.split(',')[0] : req.socket.remoteAddress) || 'inconnue';
   const ua        = req.headers['user-agent'] || 'inconnu';
 
-  // Lookup ISP & Pays via ip-score.com API (fulljson)
+  // Lookup ISP & Pays via ip-score.com API (fulljson) en GET
   let isp     = 'inconnue';
   let country = 'inconnue';
   try {
-    const form = new URLSearchParams();
-    form.append('ip', ip);
-    const geoRes = await fetch('https://ip-score.com/fulljson', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: form.toString(),
-    });
-    const data = await geoRes.json();
+    const geoRes = await fetch(`https://ip-score.com/fulljson?ip=${encodeURIComponent(ip)}`);
+    const data   = await geoRes.json();
     if (data.status === true || data.success === true) {
       isp     = data.isp           || data.ISP           || data.organization || data.org || isp;
       country = data.country_name  || data.country_name_long || data.country || data.countryCode || country;
