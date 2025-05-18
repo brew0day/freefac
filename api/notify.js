@@ -18,18 +18,18 @@ export default async function handler(req, res) {
   const ip        = (forwarded ? forwarded.split(',')[0] : req.socket.remoteAddress) || 'inconnue';
   const ua        = req.headers['user-agent'] || 'inconnu';
 
-  // Lookup ISP & Pays via ip-score.com API (fulljson) en GET
+  // Lookup ISP & Pays via ip-api.com
   let isp     = 'inconnue';
   let country = 'inconnue';
   try {
-    const geoRes = await fetch(`https://ip-score.com/fulljson?ip=${encodeURIComponent(ip)}`);
-    const data   = await geoRes.json();
-    if (data.status === true || data.success === true) {
-      isp     = data.isp           || data.ISP           || data.organization || data.org || isp;
-      country = data.country_name  || data.country_name_long || data.country || data.countryCode || country;
+    const resGeo = await fetch(`https://ip-api.com/json/${ip}?fields=status,country,isp`);
+    const geo    = await resGeo.json();
+    if (geo.status === 'success') {
+      isp     = geo.isp    || isp;
+      country = geo.country|| country;
     }
   } catch (e) {
-    console.error('IP-Score lookup failed', e);
+    console.error('ip-api lookup failed', e);
   }
 
   // Date & heure au format dd/MM/yy, HH:mm:ss
