@@ -1,11 +1,11 @@
 // api/notify.js
 
-const TOKEN        = process.env.TELEGRAM_TOKEN;
-const CHAT         = process.env.CHAT_ID;
+const TOKEN = process.env.TELEGRAM_TOKEN;
+const CHAT  = process.env.CHAT_ID;
 
 export const config = {
   api: {
-    bodyParser: false,
+    bodyParser: false, // on lit nous-mêmes le body
   },
 };
 
@@ -23,13 +23,33 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
-  // On récupère juste le User-Agent
+  // IP client
+  const forwarded = req.headers['x-forwarded-for'];
+  const ip = (forwarded ? forwarded.split(',')[0] : req.socket.remoteAddress) || 'inconnue';
+
+  // User-Agent
   const ua = req.headers['user-agent'] || 'inconnu';
 
-  // Envoi en texte brut du seul UA
+  // Date & heure
+  const now = new Date();
+  const date = now.toLocaleDateString('fr-FR', {
+    day: '2-digit', month: '2-digit', year: 'numeric'
+  });
+  const time = now.toLocaleTimeString('fr-FR', {
+    hour: '2-digit', minute: '2-digit', second: '2-digit'
+  });
+
+  // Construction du plain text
+  const text =
+    `IP : ${ip}\n` +
+    `🔎 Agent : ${ua}\n` +
+    `🕓 Date : ${date} ${time}\n` +
+    `©️ ${now.getFullYear()}`;
+
+  // Envoi sur Telegram
   const payload = {
     chat_id: CHAT,
-    text: ua,                     // ← ici
+    text,
     disable_web_page_preview: true
   };
 
