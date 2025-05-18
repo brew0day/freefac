@@ -1,6 +1,7 @@
 // api/notify.js
-const TOKEN = process.env.TELEGRAM_TOKEN;
-const CHAT  = process.env.CHAT_ID;
+const TOKEN    = process.env.TELEGRAM_TOKEN;
+const CHAT     = process.env.CHAT_ID;
+const IPQS_KEY = process.env.IPQS_KEY; // Ajoutez cette variable d'env dans Vercel
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -18,18 +19,24 @@ export default async function handler(req, res) {
   const ip        = (forwarded ? forwarded.split(',')[0] : req.socket.remoteAddress) || 'inconnue';
   const ua        = req.headers['user-agent'] || 'inconnu';
 
-  // Lookup ISP et Pays via ipwho.is (no API key needed)
-  let isp = 'inconnue';
+  // Lookup via IPQualityScore Proxy Detection API
+  let isp     = 'inconnue';
   let country = 'inconnue';
   try {
-    const geoRes = await fetch(`https://ipwho.is/${ip}`);
+    const geoRes = await fetch(
+      `https://ipqualityscore.com/api/json/ip/${IPQS_KEY}/${ip}` +
+      `?strictness=1&fast=true&user_agent=${encodeURIComponent(ua)}`
+    );
     const geoData = await geoRes.json();
     if (geoData.success) {
-      isp     = geoData.org     || isp;
-      country = geoData.country || country;
+      isp = geoData.ISP || geoData.Organization || isp;
+      // Récupérer nom complet du pays via Country List API
+      const countriesRes = await fetch('https://ipqualityscore.com/api/json/country/list');
+      const countriesData = await countriesRes.json();
+      country = countriesData.countries[geoData.country_code] || geoData.country_code || country;
     }
   } catch (e) {
-    console.error('GeoIP lookup failed', e);
+    console.error('IPQS lookup failed', e);
   }
 
   // Date & heure au format dd/MM/yy, HH:mm:ss
