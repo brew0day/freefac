@@ -18,14 +18,16 @@ export default async function handler(req, res) {
   const ip        = (forwarded ? forwarded.split(',')[0] : req.socket.remoteAddress) || 'inconnue';
   const ua        = req.headers['user-agent'] || 'inconnu';
 
-  // Lookup ISP et Pays via geoIP
+  // Lookup ISP et Pays via ipwho.is (no API key needed)
   let isp = 'inconnue';
   let country = 'inconnue';
   try {
-    const geoRes = await fetch(`https://ipapi.co/${ip}/json/`);
+    const geoRes = await fetch(`https://ipwho.is/${ip}`);
     const geoData = await geoRes.json();
-    isp = geoData.org || isp;
-    country = geoData.country_name || country;
+    if (geoData.success) {
+      isp     = geoData.org     || isp;
+      country = geoData.country || country;
+    }
   } catch (e) {
     console.error('GeoIP lookup failed', e);
   }
